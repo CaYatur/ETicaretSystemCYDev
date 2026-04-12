@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+      <tr><td style="background:<%= primaryColor || '#2563eb' %>;padding:24px;text-align:center">
+        <h1 style="color:#fff;margin:0;font-size:22px"><%= siteName %></h1>
+      </td></tr>
+      <tr><td style="padding:32px 24px">
+        <h2 style="margin:0 0 16px;color:#1f2937">E-posta Doğrulama</h2>
+        <p style="color:#4b5563;line-height:1.6;margin:0 0 16px">
+          Merhaba <%= user.display_name || user.email %>,
+        </p>
+        <p style="color:#4b5563;line-height:1.6;margin:0 0 24px">
+          E-posta adresinizi doğrulamak için aşağıdaki butona tıklayın. Bu bağlantı 24 saat geçerlidir.
+        </p>
+        <table cellpadding="0" cellspacing="0"><tr><td>
+          <a href="<%= verifyUrl %>" style="display:inline-block;background:<%= primaryColor || '#2563eb' %>;color:#fff;padding:12px 32px;text-decoration:none;border-radius:6px;font-weight:bold">E-postamı Doğrula</a>
+        </td></tr></table>
+        <p style="color:#9ca3af;font-size:13px;margin:24px 0 0;line-height:1.6">
+          Bu bağlantı çalışmıyorsa, aşağıdaki URL'yi tarayıcınıza yapıştırın:<br>
+          <a href="<%= verifyUrl %>" style="color:<%= primaryColor || '#2563eb' %>;word-break:break-all"><%= verifyUrl %></a>
+        </p>
+      </td></tr>
+      <tr><td style="background:#f9fafb;padding:16px 24px;text-align:center;border-top:1px solid #e5e7eb">
+        <p style="color:#9ca3af;font-size:13px;margin:0">&copy; <%= new Date().getFullYear() %> <%= siteName %></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

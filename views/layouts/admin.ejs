@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' | Yönetim' : 'Yönetim Paneli' %></title>
+  <meta name="robots" content="noindex, nofollow">
+  <% if (site.favicon) { %><link rel="icon" href="<%= site.favicon %>"><% } %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/style.css">
+  <link rel="stylesheet" href="/public/css/admin.css">
+  <style>
+    :root {
+      --primary: <%= theme.primary %>;
+      --secondary: <%= theme.secondary %>;
+      --accent: <%= theme.accent %>;
+    }
+  </style>
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-header">
+        <a href="/admin" class="sidebar-logo">
+          <% if (site.logo) { %><img src="<%= site.logo %>" alt="<%= site.name %>" height="32"><% } else { %><strong><%= site.name %></strong><% } %>
+        </a>
+        <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-section-title">Genel</div>
+        <a href="/admin" class="sidebar-link <%= currentPath === '/admin' ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span> Dashboard
+        </a>
+        <a href="/admin/analytics" class="sidebar-link <%= currentPath.startsWith('/admin/analytics') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> İstatistikler
+        </a>
+
+        <div class="sidebar-section-title">Mağaza</div>
+        <a href="/admin/products" class="sidebar-link <%= currentPath.startsWith('/admin/products') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span> Ürünler
+        </a>
+        <a href="/admin/categories" class="sidebar-link <%= currentPath.startsWith('/admin/categories') || currentPath.startsWith('/admin/filters') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span> Kategoriler
+        </a>
+        <a href="/admin/orders" class="sidebar-link <%= currentPath.startsWith('/admin/orders') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span> Siparişler
+        </a>
+
+        <div class="sidebar-section-title">İçerik</div>
+        <a href="/admin/posts" class="sidebar-link <%= currentPath.startsWith('/admin/posts') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Gönderiler
+        </a>
+        <a href="/admin/homepage" class="sidebar-link <%= currentPath.startsWith('/admin/homepage') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Anasayfa
+        </a>
+        <a href="/admin/slides" class="sidebar-link <%= currentPath.startsWith('/admin/slides') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Slaytlar
+        </a>
+        <a href="/admin/legal" class="sidebar-link <%= currentPath.startsWith('/admin/legal') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Yasal
+        </a>
+
+        <div class="sidebar-section-title">Kullanıcılar</div>
+        <a href="/admin/users" class="sidebar-link <%= currentPath.startsWith('/admin/users') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span> Kullanıcılar
+        </a>
+        <a href="/admin/permissions" class="sidebar-link <%= currentPath.startsWith('/admin/permissions') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span> Yetkiler
+        </a>
+
+        <div class="sidebar-section-title">Ayarlar</div>
+        <a href="/admin/settings" class="sidebar-link <%= currentPath.startsWith('/admin/settings') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span> Ayarlar
+        </a>
+        <a href="/admin/backlinks" class="sidebar-link <%= currentPath.startsWith('/admin/backlinks') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span> Backlinkler
+        </a>
+        <a href="/admin/contact" class="sidebar-link <%= currentPath.startsWith('/admin/contact') ? 'active' : '' %>">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012.18 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.13 6.13l1.27-.53a2 2 0 012.11.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></span> İletişim
+        </a>
+
+        <hr class="sidebar-divider">
+        <a href="/" class="sidebar-link" target="_blank">
+          <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></span> Siteye Git
+        </a>
+        <form action="/auth/logout" method="POST" style="margin:0">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="sidebar-link sidebar-btn" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;color:inherit;font:inherit;padding:inherit;">
+            <span class="sidebar-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span> Çıkış
+          </button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="admin-main">
+      <header class="admin-header">
+        <div class="admin-header-left">
+          <button class="mobile-toggle" id="mobileToggle">&#9776;</button>
+          <h2 class="admin-page-title"><%= typeof title !== 'undefined' ? title : 'Yönetim Paneli' %></h2>
+        </div>
+        <div class="admin-header-right">
+          <span class="admin-role-badge"><%= user ? (user.role === 'admin' ? 'Site Yöneticisi' : user.role) : '' %></span>
+          <div class="admin-user-info">
+            <% if (user && user.avatar) { %>
+            <img src="<%= user.avatar %>" alt="" class="admin-user-avatar">
+            <% } else { %>
+            <div class="admin-user-avatar-placeholder"><%= user ? user.display_name.charAt(0).toUpperCase() : '?' %></div>
+            <% } %>
+            <span class="admin-user-name"><%= user ? user.display_name : '' %></span>
+          </div>
+        </div>
+      </header>
+
+      <% if (flash) { %>
+      <div class="flash-message flash-<%= flash.type %>" id="flashMessage">
+        <span><%= flash.message %></span>
+        <button class="flash-close" id="flashCloseBtn">&times;</button>
+      </div>
+      <% } %>
+
+      <div class="admin-content">
+        <%- body %>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loadingOverlay" style="display:none">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <script>
+    window.SITE = { url: '<%= site.url %>', csrf: '<%= csrfToken %>', currency: '<%= site.currency_symbol %>' };
+  </script>
+  <script src="/public/js/main.js"></script>
+  <script src="/public/js/admin.js"></script>
+  <script>
+    // Flash message close
+    var flashCloseBtn = document.getElementById('flashCloseBtn');
+    if (flashCloseBtn) {
+      flashCloseBtn.addEventListener('click', function() {
+        this.parentElement.remove();
+      });
+    }
+    // Auto-hide flash after 5s
+    var flashMsg = document.getElementById('flashMessage');
+    if (flashMsg) {
+      setTimeout(function() { flashMsg.style.opacity = '0'; setTimeout(function() { flashMsg.remove(); }, 300); }, 5000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 56" fill="none">
+  <defs>
+    <linearGradient id="logoGrad" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <rect x="2" y="2" width="52" height="52" rx="14" fill="url(#logoGrad)"/>
+  <path d="M18 20h8v-4a2 2 0 012-2h0a2 2 0 012 2v4h8a2 2 0 012 2v2H16v-2a2 2 0 012-2z" fill="#fff" opacity=".9"/>
+  <path d="M17 26h22l-2 16a2 2 0 01-2 2H21a2 2 0 01-2-2l-2-16z" fill="#fff"/>
+  <circle cx="23" cy="34" r="2" fill="#7c3aed"/>
+  <circle cx="33" cy="34" r="2" fill="#7c3aed"/>
+  <!-- Text -->
+  <text x="66" y="24" font-family="Inter, sans-serif" font-weight="800" font-size="22" fill="#1e1b4b">CaYaDev</text>
+  <text x="66" y="46" font-family="Inter, sans-serif" font-weight="500" font-size="16" fill="#7c3aed">Ticaret</text>
+</svg>

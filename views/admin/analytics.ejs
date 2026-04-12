@@ -1,0 +1,118 @@
+<% layout('layouts/admin') %>
+
+<div class="admin-header-row">
+  <h1>Analitik</h1>
+  <div class="admin-filters-inline">
+    <a href="/admin/analytics?period=1" class="btn btn-sm <%= period == 1 ? 'btn-primary' : 'btn-outline' %>">Bugün</a>
+    <a href="/admin/analytics?period=7" class="btn btn-sm <%= period == 7 ? 'btn-primary' : 'btn-outline' %>">7 Gün</a>
+    <a href="/admin/analytics?period=30" class="btn btn-sm <%= period == 30 ? 'btn-primary' : 'btn-outline' %>">30 Gün</a>
+    <a href="/admin/analytics?period=60" class="btn btn-sm <%= period == 60 ? 'btn-primary' : 'btn-outline' %>">60 Gün</a>
+    <a href="/admin/analytics?period=90" class="btn btn-sm <%= period == 90 ? 'btn-primary' : 'btn-outline' %>">90 Gün</a>
+  </div>
+</div>
+
+<!-- Özet İstatistikler -->
+<div class="stats-grid stats-grid-4">
+  <div class="stat-card">
+    <div class="stat-info">
+      <span class="stat-number"><%= stats.totalVisits || 0 %></span>
+      <span class="stat-label">Toplam Ziyaret</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-info">
+      <span class="stat-number"><%= stats.uniqueVisitors || 0 %></span>
+      <span class="stat-label">Tekil Ziyaretçi</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-info">
+      <span class="stat-number"><%= stats.totalOrders || 0 %></span>
+      <span class="stat-label">Sipariş</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-info">
+      <span class="stat-number"><%= site.currency_symbol %><%= (stats.totalRevenue || 0).toFixed(2) %></span>
+      <span class="stat-label">Gelir</span>
+    </div>
+  </div>
+</div>
+
+<!-- Ziyaret Grafiği -->
+<div class="admin-card">
+  <h2>Günlük Ziyaretler</h2>
+  <div class="chart-container chart-container-lg">
+    <div class="simple-chart" id="dailyVisitChart">
+      <% if (visitData && visitData.length > 0) { %>
+      <% const maxVisit = Math.max(...visitData.map(v => v.count), 1); %>
+      <% visitData.forEach(v => { %>
+      <div class="chart-bar-wrap">
+        <div class="chart-bar" style="height: <%= (v.count / maxVisit * 100) %>%" title="<%= v.date %>: <%= v.count %> ziyaret">
+          <span class="chart-bar-label"><%= v.count %></span>
+        </div>
+        <span class="chart-bar-date"><%= new Date(v.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }) %></span>
+      </div>
+      <% }) %>
+      <% } else { %>
+      <p class="text-muted text-center">Henüz veri yok</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- En Çok Ziyaret Edilen Sayfalar -->
+<div class="admin-card">
+  <h2>Popüler Sayfalar</h2>
+  <% if (topPages && topPages.length > 0) { %>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Sayfa</th>
+        <th>Ziyaret</th>
+        <th>Oran</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% const totalPageViews = topPages.reduce((s, p) => s + p.count, 0); %>
+      <% topPages.forEach(p => { %>
+      <tr>
+        <td><a href="<%= p.page %>" target="_blank"><%= p.page %></a></td>
+        <td><%= p.count %></td>
+        <td>
+          <div class="progress-bar-mini">
+            <div class="progress-fill" style="width:<%= (p.count / totalPageViews * 100).toFixed(1) %>%"></div>
+          </div>
+          <span><%= (p.count / totalPageViews * 100).toFixed(1) %>%</span>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } else { %>
+  <p class="text-muted text-center">Henüz veri yok</p>
+  <% } %>
+</div>
+
+<!-- Referrer İstatistikleri -->
+<% if (referrers && referrers.length > 0) { %>
+<div class="admin-card">
+  <h2>Yönlendiren Siteler</h2>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Kaynak</th>
+        <th>Ziyaret</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% referrers.forEach(r => { %>
+      <tr>
+        <td><%= r.referrer || 'Doğrudan' %></td>
+        <td><%= r.count %></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>

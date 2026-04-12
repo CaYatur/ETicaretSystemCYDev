@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+      <tr><td style="background:<%= primaryColor || '#2563eb' %>;padding:24px;text-align:center">
+        <h1 style="color:#fff;margin:0;font-size:22px"><%= siteName %></h1>
+      </td></tr>
+      <tr><td style="padding:32px 24px">
+        <h2 style="margin:0 0 8px;color:#1f2937">Faturanız Hazır</h2>
+        <p style="color:#4b5563;line-height:1.6;margin:0 0 16px">
+          Merhaba <%= user.display_name || user.email %>,
+        </p>
+        <p style="color:#4b5563;line-height:1.6;margin:0 0 16px">
+          <strong>#<%= order.order_number %></strong> numaralı siparişinize ait fatura ekte gönderilmiştir.
+        </p>
+
+        <table width="100%" style="background:#f0fdf4;border:1px solid #22c55e;border-radius:6px;padding:16px;margin:16px 0">
+          <tr><td>
+            <p style="margin:0 0 4px;font-size:14px;color:#166534"><strong>Sipariş No:</strong> <%= order.order_number %></p>
+            <p style="margin:0 0 4px;font-size:14px;color:#166534"><strong>Toplam:</strong> <%= currencySymbol %><%= order.total.toFixed(2) %></p>
+            <p style="margin:0;font-size:14px;color:#166534"><strong>Tarih:</strong> <%= new Date(order.created_at).toLocaleDateString('tr-TR') %></p>
+          </td></tr>
+        </table>
+
+        <p style="color:#4b5563;line-height:1.6;margin:16px 0 0;font-size:13px">
+          Fatura dosyası bu e-postaya PDF olarak eklenmiştir. Lütfen indirip saklayınız.
+        </p>
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0">
+          <tr><td align="center">
+            <a href="<%= siteUrl %>/account/orders/<%= order.id %>" style="background:<%= primaryColor || '#2563eb' %>;color:#fff;text-decoration:none;padding:12px 32px;border-radius:6px;font-weight:bold;display:inline-block">
+              Siparişi Görüntüle
+            </a>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="background:#f9fafb;padding:16px 24px;text-align:center;border-top:1px solid #e5e7eb">
+        <p style="margin:0;font-size:12px;color:#9ca3af">&copy; <%= year %> <%= siteName %>. Tüm hakları saklıdır.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

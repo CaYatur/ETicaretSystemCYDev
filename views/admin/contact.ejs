@@ -1,0 +1,116 @@
+<% layout('layouts/admin') %>
+
+<h1>İletişim Yöntemleri</h1>
+
+<!-- Yeni İletişim Yöntemi -->
+<div class="admin-card" id="contactFormCard">
+  <h2 id="contactFormTitle">Yeni İletişim Yöntemi</h2>
+  <form id="contactMethodForm" action="/admin/contact" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Tür *</label>
+        <select name="type" id="cm_type" required class="form-select">
+          <option value="phone">Telefon</option>
+          <option value="email">E-posta</option>
+          <option value="address">Adres</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="telegram">Telegram</option>
+          <option value="other">Diğer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Değer *</label>
+        <input type="text" name="value" id="cm_value" required class="form-input" placeholder="Numara, e-posta, adres vb.">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Etiket</label>
+        <input type="text" name="label" id="cm_label" class="form-input" placeholder="Örn: Satış Hattı">
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">İkon (emoji)</label>
+        <input type="text" name="icon" id="cm_icon" class="form-input" placeholder="Örn: telefon, e-posta...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sıra</label>
+        <input type="number" name="sort_order" id="cm_sort" class="form-input" value="0" min="0">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-label" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+        <input type="checkbox" name="is_active" value="1" id="cm_active" checked>
+        <span class="form-label" style="margin:0">Aktif</span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Kaydet</button>
+      <button type="button" class="btn btn-outline" onclick="resetCmForm()">İptal</button>
+    </div>
+  </form>
+</div>
+
+<!-- Liste -->
+<div class="admin-card">
+  <h2>Mevcut İletişim Yöntemleri</h2>
+  <% if (methods.length === 0) { %>
+  <p class="text-muted">Henüz iletişim yöntemi yok.</p>
+  <% } else { %>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Sıra</th>
+        <th>Tür</th>
+        <th>Etiket</th>
+        <th>Değer</th>
+        <th>Durum</th>
+        <th>İşlemler</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% methods.forEach(cm => { %>
+      <tr>
+        <td><%= cm.sort_order %></td>
+        <td><%= cm.icon || '' %> <%= cm.type %></td>
+        <td><%= cm.label || '-' %></td>
+        <td><%= cm.value %></td>
+        <td><span class="badge badge-<%= cm.is_active ? 'success' : 'secondary' %>"><%= cm.is_active ? 'Aktif' : 'Pasif' %></span></td>
+        <td class="table-actions">
+          <button class="btn btn-xs btn-outline" data-item="<%= JSON.stringify(cm) %>" onclick="editContact(JSON.parse(this.dataset.item))">&#9998;</button>
+          <form action="/admin/contact/<%= cm.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-xs btn-danger"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<script>
+function editContact(cm) {
+  document.getElementById('contactFormTitle').textContent = 'İletişim Yöntemi Düzenle';
+  document.getElementById('contactMethodForm').action = '/admin/contact/' + cm.id + '?_method=PUT';
+  document.getElementById('cm_type').value = cm.type;
+  document.getElementById('cm_value').value = cm.value;
+  document.getElementById('cm_label').value = cm.label || '';
+  document.getElementById('cm_icon').value = cm.icon || '';
+  document.getElementById('cm_sort').value = cm.sort_order || 0;
+  document.getElementById('cm_active').checked = !!cm.is_active;
+  document.getElementById('contactFormCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetCmForm() {
+  document.getElementById('contactFormTitle').textContent = 'Yeni İletişim Yöntemi';
+  document.getElementById('contactMethodForm').action = '/admin/contact';
+  document.getElementById('contactMethodForm').reset();
+  document.getElementById('cm_active').checked = true;
+}
+</script>

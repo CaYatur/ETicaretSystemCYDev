@@ -1,0 +1,26 @@
+<% layout('layouts/main') %>
+
+<% var statusCode = typeof code !== 'undefined' ? code : 500; %>
+<div class="container page-content">
+  <div class="error-page text-center">
+    <h1 class="error-code"><%= statusCode %></h1>
+    <% if (statusCode === 404) { %>
+    <h2>Sayfa Bulunamadı</h2>
+    <p>Aradığınız sayfa mevcut değil veya taşınmış olabilir.</p>
+    <% } else if (statusCode === 403) { %>
+    <h2>Erişim Engellendi</h2>
+    <p>Bu sayfaya erişim yetkiniz bulunmamaktadır.</p>
+    <% } else { %>
+    <h2>Bir Hata Oluştu</h2>
+    <p><%= message || 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.' %></p>
+    <% } %>
+    <div class="error-actions">
+      <a href="/" class="btn btn-primary">Ana Sayfa</a>
+      <a href="/shop" class="btn btn-outline">Mağaza</a>
+      <button id="goBackBtn" class="btn btn-outline">Geri Dön</button>
+    </div>
+  </div>
+</div>
+<script>
+document.getElementById('goBackBtn').addEventListener('click', function() { history.back(); });
+</script>

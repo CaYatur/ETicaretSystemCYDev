@@ -1,0 +1,101 @@
+<% layout('layouts/admin') %>
+
+<div class="admin-header-row">
+  <h1>Ürünler</h1>
+  <a href="/admin/products/new" class="btn btn-primary">+ Yeni Ürün</a>
+</div>
+
+<!-- Filtreler -->
+<div class="admin-filters">
+  <form action="/admin/products" method="GET" class="filter-form">
+    <input type="text" name="search" placeholder="Ürün ara..." value="<%= search || '' %>" class="form-input form-input-sm">
+    <select name="category" class="form-select form-select-sm">
+      <option value="">Tüm Kategoriler</option>
+      <% categories.forEach(c => { %>
+      <option value="<%= c.id %>" <%= selectedCategory == c.id ? 'selected' : '' %>><%= c.name %></option>
+      <% }) %>
+    </select>
+    <select name="status" class="form-select form-select-sm">
+      <option value="">Tüm Durumlar</option>
+      <option value="1" <%= selectedStatus === '1' ? 'selected' : '' %>>Aktif</option>
+      <option value="0" <%= selectedStatus === '0' ? 'selected' : '' %>>Pasif</option>
+    </select>
+    <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
+  </form>
+</div>
+
+<% if (products.length === 0) { %>
+<div class="empty-state">
+  <p>Henüz ürün eklenmemiş.</p>
+  <a href="/admin/products/new" class="btn btn-primary">İlk Ürünü Ekle</a>
+</div>
+<% } else { %>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Görsel</th>
+      <th>Ürün Adı</th>
+      <th>Kategori</th>
+      <th>Fiyat</th>
+      <th>Stok</th>
+      <th>Durum</th>
+      <th>İşlemler</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% products.forEach(product => { %>
+    <tr>
+      <td>
+        <% if (product.cover_image) { %>
+        <img src="<%= product.cover_image %>" alt="" class="table-thumb">
+        <% } else { %>
+        <div class="table-thumb-placeholder">-</div>
+        <% } %>
+      </td>
+      <td>
+        <a href="/admin/products/<%= product.id %>/edit"><strong><%= product.title %></strong></a>
+        <% if (product.is_featured) { %><span class="badge badge-warning">Öne Çıkan</span><% } %>
+      </td>
+      <td><%= product.category_name || '-' %></td>
+      <td>
+        <% if (product.sale_price) { %>
+        <span class="text-line-through"><%= site.currency_symbol %><%= product.price.toFixed(2) %></span>
+        <strong class="text-danger"><%= site.currency_symbol %><%= product.sale_price.toFixed(2) %></strong>
+        <% } else { %>
+        <%= site.currency_symbol %><%= product.price.toFixed(2) %>
+        <% } %>
+      </td>
+      <td>
+        <% if (product.stock === -1) { %>
+        <span class="text-muted">Sınırsız</span>
+        <% } else if (product.stock === 0) { %>
+        <span class="text-danger">Tükendi</span>
+        <% } else { %>
+        <%= product.stock %>
+        <% } %>
+      </td>
+      <td>
+        <span class="badge badge-<%= product.is_active ? 'success' : 'secondary' %>"><%= product.is_active ? 'Aktif' : 'Pasif' %></span>
+      </td>
+      <td class="table-actions">
+        <a href="/shop/<%= product.slug %>" target="_blank" class="btn btn-xs btn-outline" title="Görüntüle"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
+        <a href="/admin/products/<%= product.id %>/edit" class="btn btn-xs btn-outline" title="Düzenle">&#9998;</a>
+        <form action="/admin/products/<%= product.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Bu ürünü silmek istediğinize emin misiniz?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-xs btn-danger" title="Sil"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+        </form>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<!-- Pagination -->
+<% if (totalPages > 1) { %>
+<div class="pagination">
+  <% for (let i = 1; i <= totalPages; i++) { %>
+  <a href="?page=<%= i %><%= search ? '&search=' + search : '' %><%= selectedCategory ? '&category=' + selectedCategory : '' %>" class="page-link <%= currentPage === i ? 'active' : '' %>"><%= i %></a>
+  <% } %>
+</div>
+<% } %>
+<% } %>

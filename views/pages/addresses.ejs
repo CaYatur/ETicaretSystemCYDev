@@ -1,0 +1,148 @@
+<% layout('layouts/main') %>
+
+<div class="container page-content">
+  <div class="account-layout">
+    <%- include('../partials/account-sidebar') %>
+
+    <div class="account-content">
+      <div class="account-page-header">
+        <h1>Adreslerim</h1>
+        <button class="btn btn-primary" onclick="openAddressModal()">+ Yeni Adres Ekle</button>
+      </div>
+
+  <!-- Adres Listesi -->
+  <% if (addresses.length === 0) { %>
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <p>Henüz adres eklenmemiş.</p>
+    <button class="btn btn-primary" onclick="openAddressModal()">İlk Adresini Ekle</button>
+  </div>
+  <% } else { %>
+  <div class="address-grid">
+    <% addresses.forEach(addr => { %>
+    <div class="address-card">
+      <div class="address-card-header">
+        <strong><%= addr.title %></strong>
+        <% if (addr.is_default) { %><span class="badge badge-primary">Varsayılan</span><% } %>
+      </div>
+      <p><%= addr.first_name %> <%= addr.last_name %></p>
+      <p><%= addr.address %></p>
+      <p><%= addr.district ? addr.district + ', ' : '' %><%= addr.city %> <%= addr.zip_code || '' %></p>
+      <% if (addr.phone) { %><p><%= addr.phone %></p><% } %>
+      <div class="address-actions">
+        <button class="btn btn-sm btn-outline" data-item="<%= JSON.stringify(addr) %>" onclick="editAddress(JSON.parse(this.dataset.item))">Düzenle</button>
+        <form action="/account/addresses/<%= addr.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Bu adresi silmek istediğinize emin misiniz?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+        </form>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+  <% } %>
+
+    </div><!-- /.account-content -->
+  </div><!-- /.account-layout -->
+</div>
+
+<!-- Adres Modal -->
+<div id="addressModal" class="modal-overlay">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2 id="addressFormTitle">Yeni Adres Ekle</h2>
+      <button type="button" class="modal-close" onclick="closeAddressModal()" aria-label="Kapat">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="addressForm" method="POST" action="/account/addresses">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="address_id" id="addressId">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Adres Başlığı *</label>
+            <input type="text" name="title" id="addr_title" required class="form-input" placeholder="Ev, İş vb.">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefon</label>
+            <input type="tel" name="phone" id="addr_phone" class="form-input" placeholder="05XX XXX XX XX">
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Ad *</label>
+            <input type="text" name="first_name" id="addr_first_name" required class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Soyad *</label>
+            <input type="text" name="last_name" id="addr_last_name" required class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adres *</label>
+          <textarea name="address" id="addr_address" required class="form-textarea" rows="2" placeholder="Cadde/sokak/mahalle, kapı no, daire no"></textarea>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">İl *</label>
+            <input type="text" name="city" id="addr_city" required class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">İlçe</label>
+            <input type="text" name="district" id="addr_district" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Posta Kodu</label>
+            <input type="text" name="zip_code" id="addr_zip_code" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="is_default" id="addr_is_default"> Varsayılan adres olarak ayarla
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+          <button type="button" class="btn btn-outline" onclick="closeAddressModal()">İptal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openAddressModal() {
+  document.getElementById('addressModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeAddressModal() {
+  document.getElementById('addressModal').classList.remove('open');
+  document.body.style.overflow = '';
+  resetAddressForm();
+}
+function editAddress(addr) {
+  document.getElementById('addressFormTitle').textContent = 'Adres Düzenle';
+  document.getElementById('addressId').value = addr.id;
+  document.getElementById('addressForm').action = '/account/addresses/' + addr.id + '/update';
+  document.getElementById('addr_title').value = addr.title;
+  document.getElementById('addr_first_name').value = addr.first_name;
+  document.getElementById('addr_last_name').value = addr.last_name;
+  document.getElementById('addr_address').value = addr.address;
+  document.getElementById('addr_city').value = addr.city;
+  document.getElementById('addr_district').value = addr.district || '';
+  document.getElementById('addr_zip_code').value = addr.zip_code || '';
+  document.getElementById('addr_phone').value = addr.phone || '';
+  document.getElementById('addr_is_default').checked = !!addr.is_default;
+  openAddressModal();
+}
+function resetAddressForm() {
+  document.getElementById('addressFormTitle').textContent = 'Yeni Adres Ekle';
+  document.getElementById('addressId').value = '';
+  document.getElementById('addressForm').action = '/account/addresses';
+  document.getElementById('addressForm').reset();
+}
+</script>

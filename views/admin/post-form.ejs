@@ -1,0 +1,79 @@
+<% layout('layouts/admin') %>
+
+<h1><%= post ? 'Yazı Düzenle' : 'Yeni Yazı' %></h1>
+
+<form action="<%= post ? '/admin/posts/' + post.id + '?_method=PUT' : '/admin/posts' %>" method="POST" enctype="multipart/form-data" class="admin-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-layout-2col">
+    <div class="form-main">
+      <div class="admin-card">
+        <h2>İçerik</h2>
+        <div class="form-group">
+          <label class="form-label">Başlık *</label>
+          <input type="text" name="title" required class="form-input" value="<%= post ? post.title : '' %>">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">URL Slug</label>
+          <input type="text" name="slug" class="form-input" value="<%= post ? post.slug : '' %>" placeholder="Otomatik oluşturulur">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Özet</label>
+          <textarea name="excerpt" class="form-textarea" rows="3"><%= post ? post.excerpt || '' : '' %></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">İçerik (Markdown) *</label>
+          <textarea name="content" required class="form-textarea form-textarea-lg" rows="20"><%= post ? post.content : '' %></textarea>
+          <small class="form-help">Markdown formatını destekler. **kalın**, *italik*, # başlık, - liste, ![resim](url), [link](url)</small>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>SEO</h2>
+        <div class="form-group">
+          <label class="form-label">Meta Başlık</label>
+          <input type="text" name="meta_title" class="form-input" value="<%= post ? post.meta_title || '' : '' %>" maxlength="70">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Meta Açıklama</label>
+          <textarea name="meta_description" class="form-textarea" rows="2" maxlength="160"><%= post ? post.meta_description || '' : '' %></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-sidebar">
+      <div class="admin-card">
+        <h2>Yayın</h2>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="is_published" value="1" <%= (post && post.is_published) ? 'checked' : '' %>> Yayınla
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block"><%= post ? 'Güncelle' : 'Oluştur' %></button>
+      </div>
+
+      <div class="admin-card">
+        <h2>Kategori</h2>
+        <select name="category_id" class="form-select">
+          <option value="">Kategori Seçin</option>
+          <% categories.forEach(c => { %>
+          <option value="<%= c.id %>" <%= (post && post.category_id == c.id) ? 'selected' : '' %>><%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="admin-card">
+        <h2>Kapak Görseli</h2>
+        <% if (post && post.cover_image) { %>
+        <div class="current-image" style="margin-bottom:1rem">
+          <img src="<%= post.cover_image %>" alt="" style="max-width:100%;max-height:200px">
+        </div>
+        <% } %>
+        <input type="file" name="cover_image" accept="image/*" class="form-input">
+      </div>
+    </div>
+  </div>
+</form>

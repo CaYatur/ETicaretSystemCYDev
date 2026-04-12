@@ -1,0 +1,106 @@
+<% layout('layouts/admin') %>
+
+<h1>Ürün Filtreleri</h1>
+
+<p class="text-muted">Mağazada ürünleri filtrelemek için kullanılacak dinamik filtreler oluşturun (Renk, Beden, Marka vb.).</p>
+
+<div class="admin-card" id="filterFormCard">
+  <h2 id="filterFormTitle">Yeni Filtre</h2>
+  <form id="filterForm" action="/admin/filters" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Filtre Adı *</label>
+        <input type="text" name="name" id="f_name" required class="form-input" placeholder="Örn: Renk, Beden">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Slug</label>
+        <input type="text" name="slug" id="f_slug" class="form-input" placeholder="Otomatik">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tür</label>
+        <select name="type" id="f_type" class="form-select">
+          <option value="select">Seçim (Dropdown)</option>
+          <option value="checkbox">Çoklu Seçim (Checkbox)</option>
+          <option value="text">Metin</option>
+          <option value="color">Renk</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Seçenekler (virgülle ayırın)</label>
+        <input type="text" name="options" id="f_options" class="form-input" placeholder="Kırmızı, Mavi, Yeşil">
+        <small class="form-help">Dropdown ve Checkbox türleri için geçerli</small>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sıra</label>
+        <input type="number" name="sort_order" id="f_sort" class="form-input" value="0" min="0">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Kaydet</button>
+      <button type="button" class="btn btn-outline" onclick="resetFilterForm()">İptal</button>
+    </div>
+  </form>
+</div>
+
+<div class="admin-card">
+  <h2>Mevcut Filtreler</h2>
+  <% if (filters.length === 0) { %>
+  <p class="text-muted">Henüz filtre yok.</p>
+  <% } else { %>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Sıra</th>
+        <th>Ad</th>
+        <th>Slug</th>
+        <th>Tür</th>
+        <th>Seçenekler</th>
+        <th>İşlemler</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% filters.forEach(f => { %>
+      <tr>
+        <td><%= f.sort_order %></td>
+        <td><strong><%= f.name %></strong></td>
+        <td><code><%= f.slug %></code></td>
+        <td><%= f.type %></td>
+        <td><%= f.options || '-' %></td>
+        <td class="table-actions">
+          <button class="btn btn-xs btn-outline" data-item="<%= JSON.stringify(f) %>" onclick="editFilter(JSON.parse(this.dataset.item))">&#9998;</button>
+          <form action="/admin/filters/<%= f.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Silmek istediğinize emin misiniz?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-xs btn-danger"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<script>
+function editFilter(f) {
+  document.getElementById('filterFormTitle').textContent = 'Filtre Düzenle';
+  document.getElementById('filterForm').action = '/admin/filters/' + f.id + '?_method=PUT';
+  document.getElementById('f_name').value = f.name;
+  document.getElementById('f_slug').value = f.slug;
+  document.getElementById('f_type').value = f.type;
+  document.getElementById('f_options').value = f.options || '';
+  document.getElementById('f_sort').value = f.sort_order;
+  document.getElementById('filterFormCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetFilterForm() {
+  document.getElementById('filterFormTitle').textContent = 'Yeni Filtre';
+  document.getElementById('filterForm').action = '/admin/filters';
+  document.getElementById('filterForm').reset();
+}
+</script>

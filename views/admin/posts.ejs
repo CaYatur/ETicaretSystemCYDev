@@ -1,0 +1,76 @@
+<% layout('layouts/admin') %>
+
+<div class="admin-header-row">
+  <h1>Blog Yazıları</h1>
+  <a href="/admin/posts/new" class="btn btn-primary">+ Yeni Yazı</a>
+</div>
+
+<div class="admin-filters">
+  <form action="/admin/posts" method="GET" class="filter-form">
+    <input type="text" name="search" placeholder="Yazı ara..." value="<%= search || '' %>" class="form-input form-input-sm">
+    <select name="category" class="form-select form-select-sm">
+      <option value="">Tüm Kategoriler</option>
+      <% categories.forEach(c => { %>
+      <option value="<%= c.id %>" <%= selectedCategory == c.id ? 'selected' : '' %>><%= c.name %></option>
+      <% }) %>
+    </select>
+    <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
+  </form>
+</div>
+
+<% if (posts.length === 0) { %>
+<div class="empty-state">
+  <p>Henüz yazı yok.</p>
+  <a href="/admin/posts/new" class="btn btn-primary">İlk Yazıyı Oluştur</a>
+</div>
+<% } else { %>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Görsel</th>
+      <th>Başlık</th>
+      <th>Kategori</th>
+      <th>Yazar</th>
+      <th>Durum</th>
+      <th>Tarih</th>
+      <th>İşlemler</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% posts.forEach(post => { %>
+    <tr>
+      <td>
+        <% if (post.cover_image) { %>
+        <img src="<%= post.cover_image %>" alt="" class="table-thumb">
+        <% } else { %>
+        <div class="table-thumb-placeholder">-</div>
+        <% } %>
+      </td>
+      <td><a href="/admin/posts/<%= post.id %>/edit"><strong><%= post.title %></strong></a></td>
+      <td><%= post.category_name || '-' %></td>
+      <td><%= post.author_name || '-' %></td>
+      <td>
+        <span class="badge badge-<%= post.is_published ? 'success' : 'warning' %>"><%= post.is_published ? 'Yayında' : 'Taslak' %></span>
+      </td>
+      <td><%= new Date(post.created_at).toLocaleDateString('tr-TR') %></td>
+      <td class="table-actions">
+        <a href="/blog/<%= post.slug %>" target="_blank" class="btn btn-xs btn-outline"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
+        <a href="/admin/posts/<%= post.id %>/edit" class="btn btn-xs btn-outline">&#9998;</a>
+        <form action="/admin/posts/<%= post.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Bu yazıyı silmek istediğinize emin misiniz?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-xs btn-danger"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+        </form>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<% if (totalPages > 1) { %>
+<div class="pagination">
+  <% for (let i = 1; i <= totalPages; i++) { %>
+  <a href="?page=<%= i %><%= search ? '&search=' + search : '' %>" class="page-link <%= currentPage === i ? 'active' : '' %>"><%= i %></a>
+  <% } %>
+</div>
+<% } %>
+<% } %>

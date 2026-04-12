@@ -1,0 +1,214 @@
+<% layout('layouts/main') %>
+
+<div class="container page-content">
+  <div class="account-layout">
+    <%- include('../partials/account-sidebar') %>
+
+    <div class="account-content">
+      <div class="account-page-header">
+        <h1>Fatura Profillerim</h1>
+        <button class="btn btn-primary" onclick="openBillingModal()">+ Yeni Profil Ekle</button>
+      </div>
+
+      <!-- Profil Listesi -->
+      <% if (profiles.length === 0) { %>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p>Henüz fatura profili eklenmemiş.</p>
+        <button class="btn btn-primary" onclick="openBillingModal()">İlk Profilini Ekle</button>
+      </div>
+      <% } else { %>
+      <div class="address-grid">
+        <% profiles.forEach(bp => { %>
+        <div class="address-card">
+          <div class="address-card-header">
+            <strong><%= bp.type === 'corporate' ? bp.company_name : bp.first_name + ' ' + bp.last_name %></strong>
+            <div>
+              <span class="badge badge-<%= bp.type === 'corporate' ? 'info' : 'secondary' %>"><%= bp.type === 'corporate' ? 'Kurumsal' : 'Bireysel' %></span>
+              <% if (bp.is_default) { %><span class="badge badge-primary">Varsayılan</span><% } %>
+            </div>
+          </div>
+          <% if (bp.type === 'corporate') { %>
+          <p>VD: <%= bp.tax_office %> / VKN: <%= bp.tax_no %></p>
+          <% } else { %>
+          <p>TC: <%= bp.tc_no ? bp.tc_no.replace(/^(\d{3})(\d+)(\d{2})$/, '$1****$3') : '-' %></p>
+          <% } %>
+          <p><%= bp.address %></p>
+          <p><%= bp.district ? bp.district + ', ' : '' %><%= bp.city %></p>
+          <div class="address-actions">
+            <button class="btn btn-sm btn-outline" data-item="<%= JSON.stringify(bp) %>" onclick="editBilling(JSON.parse(this.dataset.item))">Düzenle</button>
+            <form action="/account/billing/<%= bp.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Bu fatura profilini silmek istediğinize emin misiniz?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+            </form>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+
+    </div><!-- /.account-content -->
+  </div><!-- /.account-layout -->
+</div>
+
+<!-- Fatura Profili Modal -->
+<div id="billingModal" class="modal-overlay">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h2 id="billingFormTitle">Yeni Fatura Profili</h2>
+      <button type="button" class="modal-close" onclick="closeBillingModal()" aria-label="Kapat">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="billingForm" method="POST" action="/account/billing">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="profile_id" id="profileId">
+
+        <div class="form-group">
+          <label class="form-label">Fatura Türü *</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="type" value="individual" id="typeIndividual" onchange="toggleBillingType(this.value)"> Bireysel
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="type" value="corporate" id="typeCorporate" onchange="toggleBillingType(this.value)"> Kurumsal
+            </label>
+          </div>
+        </div>
+
+        <!-- Bireysel Alanlar -->
+        <div id="individualFields">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Ad *</label>
+              <input type="text" name="first_name" id="bp_first_name" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Soyad *</label>
+              <input type="text" name="last_name" id="bp_last_name" class="form-input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">TC Kimlik No * <small class="text-muted">(11 hane)</small></label>
+            <input type="text" name="tc_no" id="bp_tc_no" class="form-input" maxlength="11" pattern="[0-9]{11}" placeholder="11 haneli TC kimlik numarası">
+          </div>
+        </div>
+
+        <!-- Kurumsal Alanlar -->
+        <div id="corporateFields" style="display:none">
+          <div class="form-group">
+            <label class="form-label">Şirket Unvanı * <small class="text-muted">(ticaret sicilindeki tam unvan)</small></label>
+            <input type="text" name="company_name" id="bp_company_name" class="form-input" placeholder="Örn: ABC Ticaret A.Ş.">
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Vergi Dairesi *</label>
+              <input type="text" name="tax_office" id="bp_tax_office" class="form-input" placeholder="Vergi dairesi adı">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vergi No (VKN) * <small class="text-muted">(10 hane)</small></label>
+              <input type="text" name="tax_no" id="bp_tax_no" class="form-input" maxlength="10" pattern="[0-9]{10}" placeholder="10 haneli vergi numarası">
+            </div>
+          </div>
+        </div>
+
+        <!-- Ortak Alanlar -->
+        <div class="form-group">
+          <label class="form-label">Fatura Adresi *</label>
+          <textarea name="address" id="bp_address" required class="form-textarea" rows="2" placeholder="Cadde/sokak/mahalle, kapı no, daire no"></textarea>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">İl *</label>
+            <input type="text" name="city" id="bp_city" required class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">İlçe</label>
+            <input type="text" name="district" id="bp_district" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Posta Kodu</label>
+            <input type="text" name="zip_code" id="bp_zip_code" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Telefon</label>
+            <input type="tel" name="phone" id="bp_phone" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-posta <small class="text-muted">(fatura bildirimi)</small></label>
+            <input type="email" name="email" id="bp_email" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="is_default" id="bp_is_default"> Varsayılan profil olarak ayarla
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+          <button type="button" class="btn btn-outline" onclick="closeBillingModal()">İptal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openBillingModal() {
+  document.getElementById('billingModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeBillingModal() {
+  document.getElementById('billingModal').classList.remove('open');
+  document.body.style.overflow = '';
+  resetBillingForm();
+}
+function toggleBillingType(type) {
+  const indivEl = document.getElementById('individualFields');
+  const corpEl = document.getElementById('corporateFields');
+  const isIndiv = type === 'individual';
+  indivEl.style.display = isIndiv ? 'block' : 'none';
+  corpEl.style.display = isIndiv ? 'none' : 'block';
+  indivEl.querySelectorAll('input, textarea, select').forEach(function(el) { el.disabled = !isIndiv; });
+  corpEl.querySelectorAll('input, textarea, select').forEach(function(el) { el.disabled = isIndiv; });
+}
+function editBilling(bp) {
+  document.getElementById('billingFormTitle').textContent = 'Fatura Profili Düzenle';
+  document.getElementById('profileId').value = bp.id;
+  document.getElementById('billingForm').action = '/account/billing/' + bp.id + '/update';
+  var type = bp.type || 'individual';
+  document.querySelector('input[name="type"][value="' + type + '"]').checked = true;
+  toggleBillingType(type);
+  document.getElementById('bp_first_name').value = bp.first_name || '';
+  document.getElementById('bp_last_name').value = bp.last_name || '';
+  document.getElementById('bp_tc_no').value = bp.tc_no || '';
+  document.getElementById('bp_company_name').value = bp.company_name || '';
+  document.getElementById('bp_tax_office').value = bp.tax_office || '';
+  document.getElementById('bp_tax_no').value = bp.tax_no || '';
+  document.getElementById('bp_address').value = bp.address || '';
+  document.getElementById('bp_city').value = bp.city || '';
+  document.getElementById('bp_district').value = bp.district || '';
+  document.getElementById('bp_zip_code').value = bp.zip_code || '';
+  document.getElementById('bp_phone').value = bp.phone || '';
+  document.getElementById('bp_email').value = bp.email || '';
+  document.getElementById('bp_is_default').checked = !!bp.is_default;
+  document.getElementById('billingModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function resetBillingForm() {
+  document.getElementById('billingFormTitle').textContent = 'Yeni Fatura Profili';
+  document.getElementById('profileId').value = '';
+  document.getElementById('billingForm').action = '/account/billing';
+  document.getElementById('billingForm').reset();
+  document.getElementById('typeIndividual').checked = true;
+  toggleBillingType('individual');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  toggleBillingType('individual');
+});
+</script>

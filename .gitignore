@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+data/
+logs/
+*.log
+*.sqlite
+*.db
+uploads/*
+!uploads/.gitkeep
+.vscode/

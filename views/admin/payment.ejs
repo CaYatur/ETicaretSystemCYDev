@@ -1,0 +1,73 @@
+<% layout('layouts/admin') %>
+
+<h1>Ödeme Ayarları</h1>
+
+<form action="/admin/payment" method="POST">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <!-- IBAN Ayarları -->
+  <div class="admin-card">
+    <div class="admin-card-header">
+      <h2>Havale / EFT (IBAN)</h2>
+      <label class="switch-label">
+        <input type="checkbox" name="iban_active" value="1" <%= ibanSettings.is_active ? 'checked' : '' %>>
+        <span>Aktif</span>
+      </label>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Banka Adı *</label>
+        <input type="text" name="iban_bank_name" class="form-input" value="<%= ibanConfig.bank_name || '' %>" placeholder="Örn: Ziraat Bankası">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hesap Sahibi *</label>
+        <input type="text" name="iban_account_holder" class="form-input" value="<%= ibanConfig.account_holder || '' %>">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">IBAN *</label>
+      <input type="text" name="iban_number" class="form-input" value="<%= ibanConfig.iban || '' %>" placeholder="TR...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ek Bilgi</label>
+      <textarea name="iban_notes" class="form-textarea" rows="2"><%= ibanConfig.notes || '' %></textarea>
+    </div>
+  </div>
+
+  <!-- Kredi Kartı Ayarları -->
+  <div class="admin-card">
+    <div class="admin-card-header">
+      <h2>Kredi / Banka Kartı</h2>
+      <label class="switch-label">
+        <input type="checkbox" name="card_active" value="1" <%= cardSettings.is_active ? 'checked' : '' %>>
+        <span>Aktif</span>
+      </label>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ödeme Sağlayıcı</label>
+      <select name="card_provider" class="form-select">
+        <option value="iyzico" <%= cardConfig.provider === 'iyzico' ? 'selected' : '' %>>iyzico</option>
+        <option value="paytr" <%= cardConfig.provider === 'paytr' ? 'selected' : '' %>>PayTR</option>
+        <option value="stripe" <%= cardConfig.provider === 'stripe' ? 'selected' : '' %>>Stripe</option>
+        <option value="custom" <%= cardConfig.provider === 'custom' ? 'selected' : '' %>>Özel</option>
+      </select>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">API Key</label>
+        <input type="text" name="card_api_key" class="form-input" value="<%= cardConfig.api_key || '' %>" placeholder="API anahtarı">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Secret Key</label>
+        <input type="password" name="card_secret_key" class="form-input" value="<%= cardConfig.secret_key || '' %>" placeholder="Gizli anahtar">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" name="card_sandbox" value="1" <%= cardConfig.sandbox ? 'checked' : '' %>> Test (Sandbox) Modu
+      </label>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary btn-lg">Ödeme Ayarlarını Kaydet</button>
+</form>

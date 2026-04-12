@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' | ' + site.name : site.name %></title>
+  <meta name="description" content="<%= typeof description !== 'undefined' ? description : site.description %>">
+  <meta name="keywords" content="<%= site.keywords %>">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : site.name %>">
+  <meta property="og:description" content="<%= typeof description !== 'undefined' ? description : site.description %>">
+  <meta property="og:url" content="<%= site.url + currentPath %>">
+  <meta property="og:type" content="website">
+  <% if (site.favicon) { %>
+  <link rel="icon" type="image/png" sizes="32x32" href="<%= site.favicon %>">
+  <link rel="apple-touch-icon" href="<%= site.favicon %>">
+  <% } else { %>
+  <link rel="icon" type="image/svg+xml" href="/public/branding/favicon.svg">
+  <% } %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/style.css">
+  <style>
+    :root {
+      --primary: <%= theme.primary %>;
+      --secondary: <%= theme.secondary %>;
+      --accent: <%= theme.accent %>;
+      --bg: <%= theme.background %>;
+      --text: <%= theme.text %>;
+      --header-bg: <%= theme.headerBg %>;
+      --footer-bg: <%= theme.footerBg %>;
+      --font: <%= theme.fontFamily %>;
+      --radius: <%= theme.borderRadius %>px;
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  
+  <% if (flash) { %>
+  <div class="flash-message flash-<%= flash.type %>" id="flashMessage">
+    <div class="container">
+      <span><%= flash.message %></span>
+      <button onclick="this.parentElement.parentElement.remove()" class="flash-close">&times;</button>
+    </div>
+  </div>
+  <% } %>
+
+  <main class="main-content">
+    <%- body %>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <div class="loading-overlay" id="loadingOverlay" style="display:none">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <script>
+    window.SITE = {
+      url: '<%= site.url %>',
+      csrf: '<%= csrfToken %>',
+      currency: '<%= site.currency_symbol %>',
+      kdvEnabled: <%- site.kdv_enabled ? 'true' : 'false' %>,
+      kdvRate: <%= parseFloat(site.kdv_rate) || 0 %>
+    };
+  </script>
+  <script src="/public/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<% layout('layouts/main') %>
+
+<div class="container page-content">
+  <h1>Sepetim</h1>
+  
+  <div id="cartContainer">
+    <div class="loading-inline"><div class="loading-spinner-sm"></div> Yükleniyor...</div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', loadCart);
+
+var busyItems = {};
+
+function loadCart() {
+  fetch('/api/cart')
+    .then(r => r.json())
+    .then(data => {
+      const container = document.getElementById('cartContainer');
+      if (!data.items || data.items.length === 0) {
+        container.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.98-1.71l1.6-9.29H6"/></svg><h3>Sepetiniz boş</h3><a href="/shop" class="btn btn-primary">Alışverişe Başla</a></div>';
+        return;
+      }
+
+      const kdvMult = window.SITE.kdvEnabled ? (1 + window.SITE.kdvRate / 100) : 1;
+      let html = '<div class="cart-items">';
+      data.items.forEach(item => {
+        const price = item.sale_price || item.price;
+        const displayPrice = price * kdvMult;
+        const maxQty = item.stock === -1 ? 999 : item.stock;
+        const atMax = item.stock !== -1 && item.quantity >= item.stock;
+        const stockLabel = item.stock !== -1 ? '<span class="cart-item-stock">' + item.stock + ' stokta</span>' : '';
+        html += '<div class="cart-item" data-id="' + item.id + '">' +
+            '<div class="cart-item-image">' +
+              (item.cover_image ? '<img src="' + item.cover_image + '" alt="' + item.title + '" loading="lazy">' : '<div class="product-no-image"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>') +
+            '</div>' +
+            '<div class="cart-item-info">' +
+              '<h3><a href="/shop/' + item.slug + '">' + item.title + '</a></h3>' +
+              '<span class="cart-item-price">' + window.SITE.currency + displayPrice.toFixed(2) +
+                (window.SITE.kdvEnabled ? '<span style="display:block;font-size:.7rem;color:#9ca3af">KDV Hariç: ' + window.SITE.currency + price.toFixed(2) + '</span>' : '') +
+              '</span>' +
+              stockLabel +
+            '</div>' +
+            '<div class="cart-item-qty">' +
+              '<button class="qty-btn" id="minus-' + item.id + '" onclick="changeQty(' + item.id + ', -1)">−</button>' +
+              '<input type="number" class="cart-qty-input" id="qty-' + item.id + '"' +
+                ' value="' + item.quantity + '" min="1" max="' + maxQty + '"' +
+                ' data-item-id="' + item.id + '" data-max="' + maxQty + '"' +
+                ' onchange="handleQtyInput(this)">' +
+              '<button class="qty-btn" id="plus-' + item.id + '" onclick="changeQty(' + item.id + ', 1)"' + (atMax ? ' disabled' : '') + '>+</button>' +
+            '</div>' +
+            '<div class="cart-item-total" id="total-' + item.id + '">' + window.SITE.currency + (displayPrice * item.quantity).toFixed(2) + '</div>' +
+            '<button onclick="removeCartItem(' + item.id + ')" class="cart-item-remove" title="Kaldır">' +
+              '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14H7L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>' +
+              ' Kaldır</button>' +
+          '</div>';
+      });
+      html += '</div>';
+      html += '<div class="cart-summary">' +
+        '<div class="cart-total"><strong>Toplam:</strong> <span>' + window.SITE.currency + (data.total * kdvMult).toFixed(2) +
+          (window.SITE.kdvEnabled ? '<small style="display:block;font-size:.78rem;color:#6b7280">KDV Dahil</small>' : '') +
+        '</span></div>' +
+        '<a href="/api/checkout" class="btn btn-lg btn-primary">Ödemeye Geç</a>' +
+      '</div>';
+      container.innerHTML = html;
+    })
+    .catch(function() {
+      document.getElementById('cartContainer').innerHTML = '<p class="text-error">Sepet yüklenemedi.</p>';
+    });
+}
+
+function setItemBusy(id, busy) {
+  busyItems[id] = busy;
+  var minus = document.getElementById('minus-' + id);
+  var plus = document.getElementById('plus-' + id);
+  var input = document.getElementById('qty-' + id);
+  if (minus) { minus.disabled = busy; minus.style.opacity = busy ? '0.4' : ''; }
+  if (plus && !busy) {
+    var max = parseInt(input && input.dataset.max) || 999;
+    var val = parseInt(input && input.value) || 1;
+    plus.disabled = val >= max;
+    plus.style.opacity = val >= max ? '0.4' : '';
+  } else if (plus && busy) {
+    plus.disabled = true; plus.style.opacity = '0.4';
+  }
+  if (input) { input.disabled = busy; input.style.opacity = busy ? '0.6' : ''; }
+}
+
+function changeQty(id, delta) {
+  if (busyItems[id]) return;
+  var input = document.getElementById('qty-' + id);
+  if (!input) return;
+  var max = parseInt(input.dataset.max) || 999;
+  var current = parseInt(input.value) || 1;
+  var newVal = current + delta;
+  if (newVal < 1) { removeCartItem(id); return; }
+  if (newVal > max) { showToast('Maksimum stok sayısına ulaşıldı', 'warning'); return; }
+  input.value = newVal;
+  sendCartUpdate(id, newVal);
+}
+
+function handleQtyInput(input) {
+  var id = parseInt(input.dataset.itemId);
+  if (busyItems[id]) return;
+  var max = parseInt(input.dataset.max) || 999;
+  var val = parseInt(input.value);
+  if (isNaN(val) || val < 1) { input.value = 1; val = 1; }
+  if (val > max) { input.value = max; val = max; showToast('Maksimum stok sayısına ulaşıldı', 'warning'); }
+  sendCartUpdate(id, val);
+}
+
+function sendCartUpdate(id, qty) {
+  setItemBusy(id, true);
+  fetch('/api/cart/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.SITE.csrf },
+    body: JSON.stringify({ quantity: qty })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    setItemBusy(id, false);
+    if (data.error) {
+      showToast(data.error, 'error');
+      loadCart();
+      return;
+    }
+    if (typeof updateCartBadge === 'function') updateCartBadge(data.cartCount);
+    updateCartTotal();
+  })
+  .catch(function() {
+    setItemBusy(id, false);
+    showToast('Bağlantı hatası', 'error');
+  });
+}
+
+function updateCartTotal() {
+  fetch('/api/cart')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var totalEl = document.querySelector('.cart-total span');
+      var km = window.SITE.kdvEnabled ? (1 + window.SITE.kdvRate / 100) : 1;
+      if (totalEl) totalEl.textContent = window.SITE.currency + (data.total * km).toFixed(2);
+      if (typeof updateCartBadge === 'function') updateCartBadge(data.cartCount);
+      if (data.items) {
+        data.items.forEach(function(item) {
+          var t = document.getElementById('total-' + item.id);
+          if (t) t.textContent = window.SITE.currency + ((item.sale_price || item.price) * item.quantity * km).toFixed(2);
+          // Sync input values from server
+          var inp = document.getElementById('qty-' + item.id);
+          if (inp && parseInt(inp.value) !== item.quantity) inp.value = item.quantity;
+        });
+      }
+    });
+}
+
+function removeCartItem(id) {
+  setItemBusy(id, true);
+  fetch('/api/cart/' + id, { method: 'DELETE', headers: { 'X-CSRF-Token': window.SITE.csrf } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (typeof updateCartBadge === 'function') updateCartBadge(data.cartCount);
+      loadCart();
+    });
+}
+</script>
+
+<style>
+.cart-item-stock { font-size: .75rem; color: #6b7280; display: block; margin-top: .125rem; }
+.cart-qty-input::-webkit-inner-spin-button,
+.cart-qty-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.cart-qty-input { -moz-appearance: textfield; }
+.cart-qty-input { width: 3rem; text-align: center; border: 1px solid #e5e7eb; border-radius: 4px; padding: .25rem; font-size: .9375rem; }
+.cart-item-remove {
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;
+  border-radius: 6px; padding: .4rem .75rem; font-size: .8125rem; font-weight: 600;
+  cursor: pointer; transition: all .15s ease; white-space: nowrap;
+}
+.cart-item-remove:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+.cart-item-remove svg { flex-shrink: 0; }
+</style>

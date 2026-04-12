@@ -1,0 +1,245 @@
+<% layout('layouts/main') %>
+
+<div class="container page-content">
+  <div class="breadcrumb">
+    <a href="/">Ana Sayfa</a> &rsaquo;
+    <a href="/shop"><%= site.shop_name %></a> &rsaquo;
+    <% if (product.category_name) { %><a href="/shop?category=<%= product.category_slug %>"><%= product.category_name %></a> &rsaquo;<% } %>
+    <span><%= product.title %></span>
+  </div>
+
+  <div class="product-detail">
+    <!-- Görseller -->
+    <div class="product-gallery">
+      <div class="gallery-main" id="galleryMain">
+        <% if (product.cover_image) { %>
+        <img src="<%= product.cover_image %>" alt="<%= product.title %>" id="mainImage" loading="lazy" onclick="openLightbox(this.src)" style="cursor:zoom-in">
+        <% } else { %>
+        <div class="product-no-image large"><svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+        <% } %>
+        <% if (images.length > 0) { %>
+        <button class="gallery-arrow gallery-prev" onclick="galleryNav(-1)" aria-label="Önceki">&#10094;</button>
+        <button class="gallery-arrow gallery-next" onclick="galleryNav(1)" aria-label="Sonraki">&#10095;</button>
+        <% } %>
+      </div>
+      <% if (images.length > 0) { %>
+      <div class="gallery-thumbs">
+        <% if (product.cover_image) { %>
+        <img src="<%= product.cover_image %>" alt="" class="thumb active" data-idx="0" loading="lazy">
+        <% } %>
+        <% images.forEach((img, idx) => { %>
+        <img src="<%= img.image_path %>" alt="<%= img.alt_text || '' %>" class="thumb" data-idx="<%= product.cover_image ? idx + 1 : idx %>" loading="lazy">
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Ürün Bilgileri -->
+    <div class="product-info-detail">
+      <% if (product.category_name) { %>
+      <a href="/shop?category=<%= product.category_slug %>" class="product-category-link"><%= product.category_name %></a>
+      <% } %>
+      
+      <h1 class="product-title-lg"><%= product.title %></h1>
+      
+      <div class="product-price-lg">
+        <% if (product.sale_price) { %>
+        <span class="price-old-lg"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.price * (1 + site.kdv_rate / 100)).toFixed(2) : product.price.toFixed(2) %></span>
+        <span class="price-current-lg"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.sale_price * (1 + site.kdv_rate / 100)).toFixed(2) : product.sale_price.toFixed(2) %></span>
+        <span class="discount-badge"><%- Math.round((1 - product.sale_price / product.price) * 100) %>% İndirim</span>
+        <% if (site.kdv_enabled) { %><span style="display:block;font-size:.78rem;color:#9ca3af;margin-top:4px">KDV Dahil (%<%= site.kdv_rate %>) · KDV Hariç: <%= site.currency_symbol %><%= product.sale_price.toFixed(2) %></span><% } %>
+        <% } else { %>
+        <span class="price-current-lg"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.price * (1 + site.kdv_rate / 100)).toFixed(2) : product.price.toFixed(2) %></span>
+        <% if (site.kdv_enabled) { %><span style="display:block;font-size:.78rem;color:#9ca3af;margin-top:4px">KDV Dahil (%<%= site.kdv_rate %>) · KDV Hariç: <%= site.currency_symbol %><%= product.price.toFixed(2) %></span><% } %>
+        <% } %>
+      </div>
+
+      <% if (product.stock_visible && product.stock !== -1) { %>
+      <div class="stock-status <%= product.stock > 0 ? 'in-stock' : 'out-of-stock' %>">
+        <% if (product.stock > 0) { %>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Stokta (<%= product.stock %> adet)
+        <% } else { %>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Stokta Yok
+        <% } %>
+      </div>
+      <% } %>
+
+      <% if (product.description) { %>
+      <p class="product-short-desc"><%= product.description %></p>
+      <% } %>
+
+      <% if (filterValues.length > 0) { %>
+      <div class="product-attributes">
+        <% filterValues.forEach(fv => { %>
+        <div class="attribute-item">
+          <span class="attr-label"><%= fv.name %>:</span>
+          <span class="attr-value"><%= fv.value %></span>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+
+      <% if (product.stock !== 0) { %>
+      <div class="product-actions">
+        <div class="quantity-control">
+          <button onclick="changeQty(-1)" class="qty-btn">-</button>
+          <input type="number" id="productQty" value="1" min="1" max="<%= product.stock > 0 ? product.stock : 99 %>" class="qty-input">
+          <button onclick="changeQty(1)" class="qty-btn">+</button>
+        </div>
+        <button data-product-id="<%= product.id %>" onclick="addToCart(+this.dataset.productId, parseInt(document.getElementById('productQty').value) || 1)" class="btn btn-lg btn-primary btn-add-cart">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.98-1.71l1.6-9.29H6"/></svg> <%= typeof site.label_add_to_cart !== 'undefined' && site.label_add_to_cart ? site.label_add_to_cart : 'Sepete Ekle' %>
+        </button>
+        <button data-product-id="<%= product.id %>" onclick="buyNow(+this.dataset.productId, parseInt(document.getElementById('productQty').value) || 1)" class="btn btn-lg btn-accent btn-buy-now">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> <%= typeof site.label_buy_now !== 'undefined' && site.label_buy_now ? site.label_buy_now : 'Hemen Al' %>
+        </button>
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Ürün Detay İçerik -->
+  <% if (product.content) { %>
+  <div class="product-content-section">
+    <h2>Ürün Detayları</h2>
+    <div class="content-body prose"><%- renderedContent %></div>
+  </div>
+  <% } %>
+
+  <!-- Benzer Ürünler -->
+  <% if (related.length > 0) { %>
+  <section class="section">
+    <h2 class="section-title">Benzer Ürünler</h2>
+    <div class="product-grid">
+      <% related.forEach(rp => { %>
+      <a href="/shop/<%= rp.slug %>" class="product-card">
+        <div class="product-image-wrap">
+          <% if (rp.cover_image) { %><img src="<%= rp.cover_image %>" alt="<%= rp.title %>" loading="lazy"><% } else { %><div class="product-no-image"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><% } %>
+        </div>
+        <div class="product-info">
+          <h3 class="product-title"><%= rp.title %></h3>
+          <div class="product-price">
+            <% if (rp.sale_price) { %>
+            <span class="price-old"><%= site.currency_symbol %><%= site.kdv_enabled ? (rp.price * (1 + site.kdv_rate / 100)).toFixed(2) : rp.price.toFixed(2) %></span>
+            <span class="price-current"><%= site.currency_symbol %><%= site.kdv_enabled ? (rp.sale_price * (1 + site.kdv_rate / 100)).toFixed(2) : rp.sale_price.toFixed(2) %></span>
+            <% if (site.kdv_enabled) { %><span style="display:block;font-size:.68rem;color:#9ca3af;margin-top:2px">KDV Dahil · KDV Hariç: <%= site.currency_symbol %><%= rp.sale_price.toFixed(2) %></span><% } %>
+            <% } else { %>
+            <span class="price-current"><%= site.currency_symbol %><%= site.kdv_enabled ? (rp.price * (1 + site.kdv_rate / 100)).toFixed(2) : rp.price.toFixed(2) %></span>
+            <% if (site.kdv_enabled) { %><span style="display:block;font-size:.68rem;color:#9ca3af;margin-top:2px">KDV Dahil · KDV Hariç: <%= site.currency_symbol %><%= rp.price.toFixed(2) %></span><% } %>
+            <% } %>
+          </div>
+        </div>
+      </a>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+</div>
+
+<style>
+/* Gallery arrows */
+.gallery-main { position: relative; }
+.gallery-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
+.gallery-arrow:hover { background: rgba(0,0,0,.7); }
+.gallery-prev { left: .75rem; }
+.gallery-next { right: .75rem; }
+/* Lightbox */
+.lightbox-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.9); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.lightbox-overlay.active { opacity: 1; pointer-events: all; }
+.lightbox-overlay img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+.lightbox-close { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: #fff; background: none; border: none; cursor: pointer; z-index: 10; }
+.lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); font-size: 2rem; color: #fff; background: rgba(255,255,255,.15); border: none; border-radius: 50%; width: 48px; height: 48px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.lightbox-nav:hover { background: rgba(255,255,255,.3); }
+.lightbox-prev { left: 1rem; }
+.lightbox-next { right: 1rem; }
+/* Buy now button */
+.btn-buy-now { background: var(--accent, #f59e0b); color: #fff; border: none; }
+.btn-buy-now:hover { opacity: .9; }
+.product-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+/* Zoom on hover */
+.gallery-main img { transition: transform .2s; }
+</style>
+
+<!-- Lightbox Overlay -->
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1, event)">&#10094;</button>
+  <img src="" alt="" id="lightboxImage">
+  <button class="lightbox-nav lightbox-next" onclick="lightboxNav(1, event)">&#10095;</button>
+</div>
+
+<script type="application/json" id="gallery-data"><%- JSON.stringify(
+  (product.cover_image ? [product.cover_image] : []).concat(images.map(function(img) { return img.image_path; }))
+) %></script>
+<script>
+var galleryImages = JSON.parse(document.getElementById('gallery-data').textContent);
+var galleryIndex = 0;
+
+function changeImage(src, idx) {
+  document.getElementById('mainImage').src = src;
+  galleryIndex = idx || 0;
+  document.querySelectorAll('.thumb').forEach(function(t) { t.classList.remove('active'); });
+  var clickedThumb = document.querySelector('.thumb[data-idx="' + idx + '"]') ||
+    document.querySelector('.thumb.active') ||
+    document.querySelectorAll('.thumb')[idx] || null;
+  if (clickedThumb) clickedThumb.classList.add('active');
+}
+document.querySelectorAll('.thumb[data-idx]').forEach(function(img) {
+  img.addEventListener('click', function() {
+    changeImage(this.src, parseInt(this.dataset.idx));
+  });
+});
+function galleryNav(dir) {
+  if (galleryImages.length === 0) return;
+  galleryIndex = (galleryIndex + dir + galleryImages.length) % galleryImages.length;
+  document.getElementById('mainImage').src = galleryImages[galleryIndex];
+  var thumbs = document.querySelectorAll('.thumb');
+  thumbs.forEach(function(t, i) { t.classList.toggle('active', i === galleryIndex); });
+}
+function changeQty(delta) {
+  var input = document.getElementById('productQty');
+  var newVal = Math.max(1, parseInt(input.value) + delta);
+  input.value = Math.min(newVal, parseInt(input.max) || 99);
+}
+
+// Lightbox
+function openLightbox(src) {
+  var overlay = document.getElementById('lightboxOverlay');
+  document.getElementById('lightboxImage').src = src;
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox(e) {
+  if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON' && !e.target.classList.contains('lightbox-close')) return;
+  document.getElementById('lightboxOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function lightboxNav(dir, e) {
+  e.stopPropagation();
+  if (galleryImages.length === 0) return;
+  galleryIndex = (galleryIndex + dir + galleryImages.length) % galleryImages.length;
+  document.getElementById('lightboxImage').src = galleryImages[galleryIndex];
+  document.getElementById('mainImage').src = galleryImages[galleryIndex];
+}
+document.addEventListener('keydown', function(e) {
+  var overlay = document.getElementById('lightboxOverlay');
+  if (!overlay.classList.contains('active')) return;
+  if (e.key === 'Escape') closeLightbox({ target: overlay, currentTarget: overlay });
+  if (e.key === 'ArrowLeft') lightboxNav(-1, { stopPropagation: function(){} });
+  if (e.key === 'ArrowRight') lightboxNav(1, { stopPropagation: function(){} });
+});
+
+function buyNow(productId, qty) {
+  qty = qty || parseInt(document.getElementById('productQty').value) || 1;
+  fetch('/api/cart/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.SITE.csrf },
+    body: JSON.stringify({ product_id: productId, quantity: qty })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success) { window.location.href = '/api/checkout'; }
+    else { showToast(data.error || 'Hata oluştu', 'error'); }
+  })
+  .catch(function() { showToast('Bağlantı hatası', 'error'); });
+}
+</script>

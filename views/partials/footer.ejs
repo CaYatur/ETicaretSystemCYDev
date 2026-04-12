@@ -1,0 +1,80 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <!-- Site bilgisi -->
+      <div class="footer-col">
+        <% if (site.logo) { %>
+          <img src="<%= site.logo %>" alt="<%= site.name %>" class="footer-logo" loading="lazy">
+        <% } else { %>
+          <h3 class="footer-title"><%= site.name %></h3>
+        <% } %>
+        <p class="footer-desc"><%= site.description %></p>
+      </div>
+
+      <!-- Hızlı Linkler -->
+      <div class="footer-col">
+        <h4 class="footer-heading">Hızlı Linkler</h4>
+        <ul class="footer-links">
+          <li><a href="/">Ana Sayfa</a></li>
+          <% if (site.shop_enabled) { %><li><a href="/shop"><%= site.shop_name %></a></li><% } %>
+          <% if (site.blog_enabled) { %><li><a href="/blog"><%= site.blog_name %></a></li><% } %>
+          <li><a href="/contact">İletişim</a></li>
+        </ul>
+      </div>
+
+      <!-- Yasal -->
+      <div class="footer-col">
+        <h4 class="footer-heading">Yasal</h4>
+        <ul class="footer-links">
+          <% legalPages.forEach(p => { %>
+          <li><a href="/legal/<%= p.slug %>"><%= p.title %></a></li>
+          <% }) %>
+        </ul>
+      </div>
+
+      <!-- İletişim -->
+      <div class="footer-col">
+        <h4 class="footer-heading">İletişim</h4>
+        <ul class="footer-links footer-contact">
+          <% contactMethods.forEach(m => { %>
+          <li>
+            <% if (m.icon) { %><span class="contact-icon"><%= m.icon %></span><% } %>
+            <% if (m.type === 'email') { %>
+              <a href="mailto:<%= m.value %>"><%= m.label || m.value %></a>
+            <% } else if (m.type === 'phone') { %>
+              <a href="tel:<%= m.value %>"><%= m.label || m.value %></a>
+            <% } else if (m.type === 'whatsapp') { %>
+              <a href="https://wa.me/<%= m.value.replace(/[^0-9]/g, '') %>" target="_blank" rel="noopener"><%= m.label || 'WhatsApp' %></a>
+            <% } else { %>
+              <span><%= m.label || m.value %></span>
+            <% } %>
+          </li>
+          <% }) %>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Backlinkler -->
+    <% if (activeBacklinks.length > 0) { %>
+    <div class="footer-backlinks">
+      <% activeBacklinks.forEach(b => { %>
+      <a href="<%= b.url %>" <% if (b.nofollow) { %>rel="nofollow noopener"<% } else { %>rel="noopener"<% } %> target="_blank" title="<%= b.description || b.title %>">
+        <% if (b.icon) { %><span><%= b.icon %></span><% } %> <%= b.title %>
+      </a>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <div class="footer-bottom">
+      <p>&copy; <%= new Date().getFullYear() %> <%= site.name %>. Tüm hakları saklıdır.</p>
+      <p class="footer-developer">
+        <!-- noindex ile arama motorlarından gizle ama kullanıcıya göster -->
+        <!--noindex-->
+        <a href="<%= site.developer_url %>" target="_blank" rel="noopener nofollow" data-nosnippet>
+          <%= site.developer_name %> tarafından geliştirildi
+        </a>
+        <!--/noindex-->
+      </p>
+    </div>
+  </div>
+</footer>

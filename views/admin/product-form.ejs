@@ -1,0 +1,136 @@
+<% layout('layouts/admin') %>
+
+<h1><%= product ? 'Ürün Düzenle' : 'Yeni Ürün' %></h1>
+
+<form action="<%= product ? '/admin/products/' + product.id + '?_method=PUT' : '/admin/products' %>" method="POST" enctype="multipart/form-data" class="admin-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-layout-2col">
+    <div class="form-main">
+      <div class="admin-card">
+        <h2>Genel Bilgiler</h2>
+        <div class="form-group">
+          <label class="form-label">Ürün Adı *</label>
+          <input type="text" name="title" required class="form-input" value="<%= product ? product.title : '' %>">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">URL Slug</label>
+          <input type="text" name="slug" class="form-input" value="<%= product ? product.slug : '' %>" placeholder="Otomatik oluşturulur">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kısa Açıklama</label>
+          <textarea name="description" class="form-textarea" rows="3"><%= product ? product.description || '' : '' %></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Detaylı Açıklama (Markdown)</label>
+          <textarea name="content" class="form-textarea form-textarea-lg" rows="12"><%= product ? product.content || '' : '' %></textarea>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Görseller</h2>
+        <div class="form-group">
+          <label class="form-label">Kapak Görseli</label>
+          <% if (product && product.cover_image) { %>
+          <div class="current-image">
+            <img src="<%= product.cover_image %>" alt="" style="max-width:200px;max-height:200px">
+          </div>
+          <% } %>
+          <input type="file" name="cover_image" accept="image/*" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ek Görseller (birden fazla seçilebilir)</label>
+          <% if (product && images && images.length > 0) { %>
+          <div class="image-gallery-edit">
+            <% images.forEach(img => { %>
+            <div class="gallery-item">
+              <img src="<%= img.image_path %>" alt="">
+              <label class="checkbox-label"><input type="checkbox" name="delete_images[]" value="<%= img.id %>"> Sil</label>
+            </div>
+            <% }) %>
+          </div>
+          <% } %>
+          <input type="file" name="images" accept="image/*" multiple class="form-input">
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>SEO</h2>
+        <div class="form-group">
+          <label class="form-label">Meta Başlık</label>
+          <input type="text" name="meta_title" class="form-input" value="<%= product ? product.meta_title || '' : '' %>" maxlength="70">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Meta Açıklama</label>
+          <textarea name="meta_description" class="form-textarea" rows="2" maxlength="160"><%= product ? product.meta_description || '' : '' %></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-sidebar">
+      <div class="admin-card">
+        <h2>Fiyat & Stok</h2>
+        <div class="form-group">
+          <label class="form-label">Fiyat (<%= site.currency_symbol %>) *</label>
+          <input type="number" name="price" required step="0.01" min="0" class="form-input" value="<%= product ? product.price : '' %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">İndirimli Fiyat (<%= site.currency_symbol %>)</label>
+          <input type="number" name="sale_price" step="0.01" min="0" class="form-input" value="<%= product && product.sale_price ? product.sale_price : '' %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stok (-1 = sınırsız)</label>
+          <input type="number" name="stock" min="-1" class="form-input" value="<%= product ? product.stock : -1 %>">
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="stock_visible" value="1" <%= (product && product.stock_visible) ? 'checked' : '' %>> Stok adedini göster
+          </label>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Kategori</h2>
+        <div class="form-group">
+          <select name="category_id" class="form-select">
+            <option value="">Kategori Seçin</option>
+            <% categories.forEach(c => { %>
+            <option value="<%= c.id %>" <%= (product && product.category_id == c.id) ? 'selected' : '' %>><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <% if (filters && filters.length > 0) { %>
+      <div class="admin-card">
+        <h2>Filtreler</h2>
+        <% filters.forEach(filter => { %>
+        <div class="form-group">
+          <label class="form-label"><%= filter.name %></label>
+          <input type="text" name="filter_<%= filter.id %>" class="form-input" value="<%= filterValues && filterValues[filter.id] ? filterValues[filter.id] : '' %>" placeholder="Değer girin">
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+
+      <div class="admin-card">
+        <h2>Yayın</h2>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="is_active" value="1" <%= (!product || product.is_active) ? 'checked' : '' %>> Aktif
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="is_featured" value="1" <%= (product && product.is_featured) ? 'checked' : '' %>> Öne Çıkan
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block"><%= product ? 'Güncelle' : 'Oluştur' %></button>
+      </div>
+    </div>
+  </div>
+</form>

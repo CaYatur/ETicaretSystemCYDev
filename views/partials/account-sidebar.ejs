@@ -1,0 +1,24 @@
+<aside class="account-sidebar">
+  <div class="account-avatar">
+    <% if (user.avatar) { %>
+    <img src="<%= user.avatar %>" alt="<%= user.display_name %>">
+    <% } else { %>
+    <div class="avatar-placeholder"><%= user.display_name.charAt(0).toUpperCase() %></div>
+    <% } %>
+    <h3><%= user.display_name %></h3>
+    <span class="text-muted"><%= user.email %></span>
+  </div>
+  <nav class="account-nav">
+    <a href="/account" class="account-nav-item <%= currentPath === '/account' ? 'active' : '' %>">Hesap Bilgileri</a>
+    <a href="/account/orders" class="account-nav-item <%= currentPath.startsWith('/account/orders') ? 'active' : '' %>">Siparişlerim</a>
+    <a href="/account/addresses" class="account-nav-item <%= currentPath === '/account/addresses' ? 'active' : '' %>">Adreslerim</a>
+    <a href="/account/billing" class="account-nav-item <%= currentPath === '/account/billing' ? 'active' : '' %>">Fatura Profillerim</a>
+    <% if (user.role === 'admin' || user.role === 'editor' || user.role === 'moderator') { %>
+    <a href="/admin" class="account-nav-item">Yönetim Paneli</a>
+    <% } %>
+    <form action="/auth/logout" method="POST" style="display:inline">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="account-nav-item btn-link">Çıkış Yap</button>
+    </form>
+  </nav>
+</aside>

@@ -1,0 +1,339 @@
+<% layout('layouts/admin') %>
+
+<h1>Site Ayarları</h1>
+
+<form action="/admin/settings" method="POST" enctype="multipart/form-data" class="admin-form" id="settingsForm">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <!-- Genel Ayarlar -->
+  <div class="admin-card">
+    <h2>Genel Ayarlar</h2>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Site Adı</label>
+        <input type="text" name="site_name" class="form-input" value="<%= siteSettings.site_name || '' %>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Site URL</label>
+        <input type="url" name="site_url" class="form-input" value="<%= siteSettings.site_url || '' %>" placeholder="https://example.com">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Site Açıklaması</label>
+      <textarea name="site_description" class="form-textarea" rows="2"><%= siteSettings.site_description || '' %></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Anahtar Kelimeler</label>
+      <input type="text" name="site_keywords" class="form-input" value="<%= siteSettings.site_keywords || '' %>" placeholder="Virgülle ayırarak yazın">
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Logo</label>
+        <% if (siteSettings.site_logo) { %>
+        <div class="current-image"><img src="<%= siteSettings.site_logo %>" alt="Logo" style="max-height:60px"></div>
+        <% } %>
+        <input type="file" name="site_logo_file" accept="image/*" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Favicon</label>
+        <% if (siteSettings.site_favicon) { %>
+        <div class="current-image"><img src="<%= siteSettings.site_favicon %>" alt="Favicon" style="max-height:32px"></div>
+        <% } %>
+        <input type="file" name="site_favicon_file" accept="image/*" class="form-input">
+      </div>
+    </div>
+  </div>
+
+  <!-- Tema Ayarları -->
+  <div class="admin-card">
+    <h2>Tema Ayarları</h2>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Ana Renk</label>
+        <div class="color-picker-group">
+          <input type="color" name="primary_color" class="color-picker-input" value="<%= siteSettings.primary_color || '#2563eb' %>">
+          <span class="color-picker-hex"><%= siteSettings.primary_color || '#2563eb' %></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">İkincil Renk</label>
+        <div class="color-picker-group">
+          <input type="color" name="secondary_color" class="color-picker-input" value="<%= siteSettings.secondary_color || '#1e40af' %>">
+          <span class="color-picker-hex"><%= siteSettings.secondary_color || '#1e40af' %></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vurgu Renk</label>
+        <div class="color-picker-group">
+          <input type="color" name="accent_color" class="color-picker-input" value="<%= siteSettings.accent_color || '#f59e0b' %>">
+          <span class="color-picker-hex"><%= siteSettings.accent_color || '#f59e0b' %></span>
+        </div>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Header Arkaplan</label>
+        <div class="color-picker-group">
+          <input type="color" name="header_bg" class="color-picker-input" value="<%= siteSettings.header_bg || '#ffffff' %>">
+          <span class="color-picker-hex"><%= siteSettings.header_bg || '#ffffff' %></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Footer Arkaplan</label>
+        <div class="color-picker-group">
+          <input type="color" name="footer_bg" class="color-picker-input" value="<%= siteSettings.footer_bg || '#1f2937' %>">
+          <span class="color-picker-hex"><%= siteSettings.footer_bg || '#1f2937' %></span>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Google Fonts</label>
+      <input type="text" name="google_font" class="form-input" value="<%= siteSettings.google_font || 'Inter' %>" placeholder="Font adı (örn: Inter, Poppins)">
+    </div>
+  </div>
+
+  <!-- Mağaza Ayarları -->
+  <div class="admin-card">
+    <h2>Mağaza Ayarları</h2>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Para Birimi</label>
+        <input type="text" name="currency" class="form-input" value="<%= siteSettings.currency || 'TRY' %>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Para Birimi Sembolü</label>
+        <input type="text" name="currency_symbol" class="form-input" value="<%= siteSettings.currency_symbol || '₺' %>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sayfa Başına Ürün</label>
+        <input type="number" name="shop_per_page" class="form-input" value="<%= siteSettings.shop_per_page || 12 %>" min="1">
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Mağaza Başlığı</label>
+        <input type="text" name="shop_name" class="form-input" value="<%= siteSettings.shop_name || 'Mağaza' %>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blog Başlığı</label>
+        <input type="text" name="blog_name" class="form-input" value="<%= siteSettings.blog_name || 'Blog' %>">
+      </div>
+    </div>
+
+    <h3 style="margin:1rem 0 .5rem;font-size:.95rem;color:#374151">KDV Ayarları</h3>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">KDV Durumu</label>
+        <div class="toggle-wrap" style="display:flex;align-items:center;gap:.6rem;margin-top:.25rem">
+          <input type="hidden" name="kdv_enabled" value="0">
+          <label class="toggle-switch">
+            <input type="checkbox" name="kdv_enabled" value="1" <%= siteSettings.kdv_enabled === '1' ? 'checked' : '' %>>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label"><%= siteSettings.kdv_enabled === '1' ? 'Aktif' : 'Pasif' %></span>
+        </div>
+        <span class="form-help">Aktifleştirildiğinde ürün fiyatlarına KDV eklenerek gösterilir</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">KDV Oranı (%)</label>
+        <input type="number" name="kdv_rate" class="form-input" value="<%= siteSettings.kdv_rate || '20' %>" min="0" max="100" step="1">
+        <span class="form-help">Örn: 20 = %20 KDV</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kargo Ayarları -->
+  <div class="admin-card">
+    <h2>Kargo Ayarları</h2>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Kargo Ücreti (<%= siteSettings.currency_symbol || '₺' %>)</label>
+        <input type="number" name="shipping_cost" step="0.01" min="0" class="form-input" value="<%= siteSettings.shipping_cost || '0' %>" placeholder="0.00">
+        <span class="form-help">0 = ücretsiz kargo</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ücretsiz Kargo Limiti (<%= siteSettings.currency_symbol || '₺' %>)</label>
+        <input type="number" name="free_shipping_threshold" step="0.01" min="0" class="form-input" value="<%= siteSettings.free_shipping_threshold || '0' %>" placeholder="500.00">
+        <span class="form-help">Bu tutarın üzerinde ücretsiz kargo. 0 = devre dışı</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kargo Firması</label>
+        <input type="text" name="shipping_provider" class="form-input" value="<%= siteSettings.shipping_provider || '' %>" placeholder="Örn: Yurtiçi, Aras, MNG">
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Tahmini Teslimat Süresi</label>
+        <input type="text" name="shipping_delivery_time" class="form-input" value="<%= siteSettings.shipping_delivery_time || '' %>" placeholder="Örn: 2-4 iş günü">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kargo Notu</label>
+        <input type="text" name="shipping_note" class="form-input" value="<%= siteSettings.shipping_note || '' %>" placeholder="Ödeme sayfasında gösterilecek not">
+      </div>
+    </div>
+  </div>
+
+  <!-- Etiketler -->
+  <div class="admin-card">
+    <h2>Özelleştirilebilir Etiketler</h2>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">"Sepete Ekle" Butonu</label>
+        <input type="text" name="label_add_to_cart" class="form-input" value="<%= siteSettings.label_add_to_cart || 'Sepete Ekle' %>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">"Satın Al" Butonu</label>
+        <input type="text" name="label_buy_now" class="form-input" value="<%= siteSettings.label_buy_now || 'Satın Al' %>">
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">"Stokta Yok" Etiketi</label>
+        <input type="text" name="label_out_of_stock" class="form-input" value="<%= siteSettings.label_out_of_stock || 'Stokta Yok' %>">
+      </div>
+      <div class="form-group">
+        <label class="form-label">"İndirim" Etiketi</label>
+        <input type="text" name="label_sale" class="form-input" value="<%= siteSettings.label_sale || 'İndirim' %>">
+      </div>
+    </div>
+  </div>
+
+  <!-- Duyuru Bandı -->
+  <div class="admin-card">
+    <h2>Duyuru Bandı</h2>
+    <div class="form-group">
+      <label class="form-label">Duyuru Metni</label>
+      <input type="text" name="announcement_text" class="form-input" value="<%= siteSettings.announcement_text || '' %>" placeholder="Ücretsiz kargo için 500₺ ve üzeri alışveriş yapın!">
+      <span class="form-help">Boş bırakılırsa duyuru bandı gösterilmez.</span>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Buton Metni (opsiyonel)</label>
+        <input type="text" name="announcement_cta" class="form-input" value="<%= siteSettings.announcement_cta || '' %>" placeholder="Hemen Alışveriş Yap">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Buton URL (opsiyonel)</label>
+        <input type="text" name="announcement_url" class="form-input" value="<%= siteSettings.announcement_url || '' %>" placeholder="/shop">
+      </div>
+    </div>
+  </div>
+
+  <!-- Anasayfa Ayarları -->
+  <div class="admin-card">
+    <h2>Anasayfa Ayarları</h2>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:.5rem">
+        <input type="hidden" name="show_hero_section" value="0">
+        <input type="checkbox" name="show_hero_section" value="1" <%= siteSettings.show_hero_section !== '0' ? 'checked' : '' %> style="width:auto">
+        Hoş Geldiniz (Hero) Bölümünü Göster
+      </label>
+      <span class="form-help">Kapatıldığında anasayfadaki hero/hoş geldiniz bölümü gizlenir.</span>
+    </div>
+  </div>
+
+  <!-- SEO / Robots.txt -->
+  <div class="admin-card">
+    <h2>SEO & Robots.txt</h2>
+    <div class="form-group">
+      <label class="form-label">robots.txt İçeriği</label>
+      <textarea name="robots_txt" class="form-textarea" rows="8" placeholder="Boş bırakılırsa varsayılan kurallar kullanılır"><%= siteSettings.robots_txt || '' %></textarea>
+      <span class="form-help">Boş bırakılırsa otomatik oluşturulur. Özel kurallar yazmak isterseniz buraya girin.</span>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary btn-lg" id="settingsSaveBtn">Ayarları Kaydet</button>
+    <span id="settingsSaveStatus" style="display:none;font-size:0.875rem;color:#059669;font-weight:500"></span>
+  </div>
+</form>
+
+<script>
+// Color picker hex sync
+document.querySelectorAll('.color-picker-input').forEach(input => {
+  const hex = input.nextElementSibling;
+  input.addEventListener('input', () => { hex.textContent = input.value; });
+});
+
+// Upload progress
+document.getElementById('settingsForm').addEventListener('submit', function(e) {
+  const btn = document.getElementById('settingsSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Kaydediliyor...';
+});
+</script>
+
+<!-- Ödeme Yöntemleri (ayrı form) -->
+<% 
+  var ibanConfig = {};
+  var cardConfig = {};
+  var ibanActive = false;
+  var cardActive = false;
+  if (typeof paymentSettings !== 'undefined' && paymentSettings) {
+    paymentSettings.forEach(function(ps) {
+      if (ps.method === 'iban') { ibanConfig = ps.config || {}; ibanActive = ps.is_active == 1; }
+      if (ps.method === 'card') { cardConfig = ps.config || {}; cardActive = ps.is_active == 1; }
+    });
+  }
+%>
+<form action="/admin/settings/payment" method="POST" class="admin-form" style="margin-top:2rem">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  
+  <div class="admin-card">
+    <h2>Ödeme Yöntemleri</h2>
+    
+    <!-- IBAN / Havale -->
+    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin-bottom:1rem">
+      <label style="display:flex;align-items:center;gap:.5rem;font-weight:600;margin-bottom:.75rem">
+        <input type="checkbox" name="iban_active" value="1" <%= ibanActive ? 'checked' : '' %> style="width:auto">
+        Havale / EFT (IBAN)
+      </label>
+      <div class="form-group">
+        <label class="form-label">Banka Adı</label>
+        <input type="text" name="iban_bank_name" class="form-input" value="<%= ibanConfig.bank_name || '' %>" placeholder="Örn: Ziraat Bankası">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hesap Sahibi</label>
+        <input type="text" name="iban_account_holder" class="form-input" value="<%= ibanConfig.account_holder || '' %>" placeholder="Ad Soyad / Firma">
+      </div>
+      <div class="form-group">
+        <label class="form-label">IBAN Numarası</label>
+        <input type="text" name="iban_iban" class="form-input" value="<%= ibanConfig.iban || '' %>" placeholder="TR00 0000 0000 0000 0000 0000 00">
+      </div>
+    </div>
+
+    <!-- Kredi Kartı -->
+    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:1rem">
+      <label style="display:flex;align-items:center;gap:.5rem;font-weight:600;margin-bottom:.75rem">
+        <input type="checkbox" name="card_active" value="1" <%= cardActive ? 'checked' : '' %> style="width:auto">
+        Kredi / Banka Kartı
+      </label>
+      <div class="form-group">
+        <label class="form-label">Sağlayıcı</label>
+        <select name="card_provider" class="form-select">
+          <option value="none" <%= (cardConfig.provider || 'none') === 'none' ? 'selected' : '' %>>Seçiniz</option>
+          <option value="iyzico" <%= cardConfig.provider === 'iyzico' ? 'selected' : '' %>>iyzico</option>
+          <option value="paytr" <%= cardConfig.provider === 'paytr' ? 'selected' : '' %>>PayTR</option>
+          <option value="stripe" <%= cardConfig.provider === 'stripe' ? 'selected' : '' %>>Stripe</option>
+        </select>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">API Key</label>
+          <input type="text" name="card_api_key" class="form-input" value="<%= cardConfig.api_key || '' %>" placeholder="API anahtarı">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Secret Key</label>
+          <input type="password" name="card_secret_key" class="form-input" value="<%= cardConfig.secret_key || '' %>" placeholder="Gizli anahtar">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Base URL</label>
+        <input type="text" name="card_base_url" class="form-input" value="<%= cardConfig.base_url || '' %>" placeholder="https://api.provider.com">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary btn-lg">Ödeme Ayarlarını Kaydet</button>
+  </div>
+</form>

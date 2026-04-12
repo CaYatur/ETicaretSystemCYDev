@@ -1,0 +1,185 @@
+<% layout('layouts/admin') %>
+
+<div class="admin-header-row">
+  <h1>Slayt Yönetimi</h1>
+</div>
+
+<p class="text-muted" style="margin-bottom: 1.5rem;">Anasayfa slaytlarını yönetin. Sıralamayı sürükleyerek değiştirebilirsiniz.</p>
+
+<!-- Mevcut Slaytlar -->
+<div id="slidesList">
+  <% if (slides.length === 0) { %>
+  <div class="admin-card">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <h3>Henüz slayt yok</h3>
+      <p>Aşağıdaki formu kullanarak ilk slaytınızı ekleyin.</p>
+    </div>
+  </div>
+  <% } else { %>
+  <div class="slides-grid" id="sortableSlides">
+    <% slides.forEach((slide, index) => { %>
+    <div class="admin-card slide-card" data-id="<%= slide.id %>">
+      <div class="slide-preview">
+        <img src="<%= slide.image %>" alt="<%= slide.title || 'Slayt' %>" class="slide-preview-img">
+        <div class="slide-overlay">
+          <span class="badge badge-<%= slide.is_active ? 'success' : 'secondary' %>"><%= slide.is_active ? 'Aktif' : 'Pasif' %></span>
+          <span class="slide-order">#<%= index + 1 %></span>
+        </div>
+      </div>
+      <form action="/admin/slides/<%= slide.id %>" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="slide-edit-body">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Başlık</label>
+              <input type="text" name="title" class="form-input" value="<%= slide.title || '' %>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alt Başlık</label>
+              <input type="text" name="subtitle" class="form-input" value="<%= slide.subtitle || '' %>">
+            </div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">Buton Metni</label>
+              <input type="text" name="button_text" class="form-input" value="<%= slide.button_text || '' %>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Buton URL</label>
+              <input type="text" name="button_url" class="form-input" value="<%= slide.button_url || '/shop' %>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sıra</label>
+              <input type="number" name="sort_order" class="form-input" value="<%= slide.sort_order %>" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Görsel Değiştir</label>
+            <input type="file" name="image" accept="image/*" class="form-input">
+          </div>
+          <div class="form-actions">
+            <label class="checkbox-label">
+              <input type="checkbox" name="is_active" value="1" <%= slide.is_active ? 'checked' : '' %>> Aktif
+            </label>
+            <button type="submit" class="btn btn-sm btn-primary">Güncelle</button>
+          </div>
+        </div>
+      </form>
+      <form action="/admin/slides/<%= slide.id %>/delete" method="POST" style="display:inline; margin-top: 0.5rem; padding: 0 1.25rem 1rem;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bu slaytı silmek istediğinize emin misiniz?')">Sil</button>
+      </form>
+    </div>
+    <% }) %>
+  </div>
+  <% } %>
+</div>
+
+<!-- Yeni Slayt Ekle -->
+<div class="admin-card">
+  <h2>Yeni Slayt Ekle</h2>
+  <form action="/admin/slides" method="POST" enctype="multipart/form-data" id="newSlideForm">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-group">
+      <label class="form-label">Görsel * <span class="form-help">(Önerilen: 1920x600 piksel)</span></label>
+      <input type="file" name="image" accept="image/*" required class="form-input" id="slideImageInput">
+      <div id="slideImagePreview" style="display:none; margin-top:0.75rem;">
+        <img src="" alt="Önizleme" style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid #e2e8f0;">
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Başlık</label>
+        <input type="text" name="title" class="form-input" placeholder="Slayt başlığı">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Alt Başlık</label>
+        <input type="text" name="subtitle" class="form-input" placeholder="Kısa açıklama">
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Buton Metni</label>
+        <input type="text" name="button_text" class="form-input" placeholder="Örn: Hemen İncele">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Buton URL</label>
+        <input type="text" name="button_url" class="form-input" value="/shop" placeholder="/shop">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sıra</label>
+        <input type="number" name="sort_order" class="form-input" value="<%= slides.length %>" min="0">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Slayt Ekle</button>
+  </form>
+</div>
+
+<style>
+.slides-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+.slide-card { padding: 0; overflow: hidden; }
+.slide-preview { position: relative; width: 100%; aspect-ratio: 16/6; overflow: hidden; background: #1e293b; }
+.slide-preview-img { width: 100%; height: 100%; object-fit: cover; }
+.slide-overlay { position: absolute; top: 0.75rem; right: 0.75rem; display: flex; gap: 0.5rem; align-items: center; }
+.slide-order { background: rgba(0,0,0,0.6); color: #fff; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+.slide-edit-body { padding: 1.25rem; }
+@media (max-width: 768px) { .slides-grid { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+// Image preview for new slide
+document.getElementById('slideImageInput').addEventListener('change', function() {
+  var preview = document.getElementById('slideImagePreview');
+  if (this.files && this.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      preview.style.display = 'block';
+      preview.querySelector('img').src = e.target.result;
+    };
+    reader.readAsDataURL(this.files[0]);
+  } else {
+    preview.style.display = 'none';
+  }
+});
+
+// Drag and drop reorder
+var sortable = document.getElementById('sortableSlides');
+if (sortable) {
+  var dragEl = null;
+  sortable.querySelectorAll('.slide-card').forEach(function(card) {
+    card.draggable = true;
+    card.style.cursor = 'grab';
+    card.addEventListener('dragstart', function(e) {
+      dragEl = card;
+      card.style.opacity = '0.5';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', function() {
+      card.style.opacity = '1';
+      dragEl = null;
+      sortable.querySelectorAll('.slide-card').forEach(function(c) { c.classList.remove('drag-over'); });
+      // Save new order
+      var order = [];
+      sortable.querySelectorAll('.slide-card').forEach(function(c) { order.push(c.dataset.id); });
+      fetch('/admin/slides/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: order, _csrf: window.SITE.csrf })
+      });
+    });
+    card.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (dragEl && dragEl !== card) {
+        card.classList.add('drag-over');
+        var rect = card.getBoundingClientRect();
+        var mid = rect.top + rect.height / 2;
+        if (e.clientY < mid) { sortable.insertBefore(dragEl, card); }
+        else { sortable.insertBefore(dragEl, card.nextSibling); }
+      }
+    });
+    card.addEventListener('dragleave', function() { card.classList.remove('drag-over'); });
+  });
+}
+</script>

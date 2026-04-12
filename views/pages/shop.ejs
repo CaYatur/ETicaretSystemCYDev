@@ -1,0 +1,197 @@
+<% layout('layouts/main') %>
+
+<%
+  var selectedCat = categories.find(function(c) { return c.slug === currentCategory; });
+%>
+<% if (selectedCat && selectedCat.bg_image) { %>
+<style>
+  body { background-image: url('<%= selectedCat.bg_image %>'); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat; }
+</style>
+<% } %>
+
+<% if (selectedCat) { %>
+<div class="container" style="padding-top:1.5rem;padding-bottom:0">
+  <div style="border-radius:14px;overflow:hidden;margin-bottom:1.5rem;padding:2rem 2.5rem;display:flex;align-items:center;min-height:110px;background:#fff;position:relative;box-shadow:0 2px 16px rgba(0,0,0,.08);border:1px solid var(--border-light,#e5e7eb)">
+    <div style="position:relative;z-index:2">
+      <h1 style="font-size:1.75rem;font-weight:800;margin:0 0 .3rem;color:var(--text,#1f2937)"><%= selectedCat.icon ? selectedCat.icon + ' ' : '' %><%= selectedCat.name %></h1>
+      <% if (selectedCat.description) { %><p style="margin:0;color:#6b7280;font-size:.9375rem"><%= selectedCat.description %></p><% } %>
+    </div>
+  </div>
+</div>
+<% } %>
+<div class="container page-content">
+  <div class="shop-layout">
+    <!-- Sidebar Filtreleri -->
+    <aside class="shop-sidebar">
+      <div style="background:#fff;border-radius:12px;padding:1.25rem;border:1px solid var(--border-light);box-shadow:0 2px 12px rgba(0,0,0,.08)">
+      <h3 class="sidebar-title">Kategoriler</h3>
+      <ul class="category-list">
+        <li><a href="/shop" class="<%= !currentCategory ? 'active' : '' %>">Tümü</a></li>
+        <% categories.forEach(c => { %>
+        <li>
+          <a href="/shop?category=<%= c.slug %>" class="<%= currentCategory === c.slug ? 'active' : '' %>" style="<%= c.color ? 'border-left: 3px solid ' + c.color : '' %>">
+            <% if (c.icon) { %><span><%= c.icon %></span><% } %>
+            <%= c.name %>
+          </a>
+        </li>
+        <% }) %>
+      </ul>
+
+      <% if (filters.length > 0) { %>
+      <div class="filter-section">
+        <h3 class="sidebar-title">Filtreler</h3>
+        <% filters.forEach(f => { %>
+        <div class="filter-group">
+          <label class="filter-label"><%= f.name %></label>
+          <% if (f.type === 'select' && Array.isArray(f.options)) { %>
+          <select class="filter-select" data-filter-id="<%= f.id %>" onchange="applyFilters()">
+            <option value="">Tümü</option>
+            <% f.options.forEach(opt => { %>
+            <option value="<%= opt %>"><%= opt %></option>
+            <% }) %>
+          </select>
+          <% } %>
+        </div>
+        <% }) %>
+      </div>
+      <% } %>
+
+      <div class="filter-section">
+        <h3 class="sidebar-title">Fiyat Aralığı</h3>
+        <div class="price-filter">
+          <input type="number" id="minPrice" placeholder="Min" value="<%= query.min_price || '' %>" class="input-sm">
+          <span>-</span>
+          <input type="number" id="maxPrice" placeholder="Max" value="<%= query.max_price || '' %>" class="input-sm">
+          <button onclick="applyFilters()" class="btn btn-sm btn-primary">Uygula</button>
+        </div>
+      </div>
+      </div>
+    </aside>
+
+    <!-- Ürün Listesi -->
+    <div class="shop-content" style="background:#fff;border-radius:12px;padding:1.5rem;border:1px solid var(--border-light);box-shadow:0 2px 12px rgba(0,0,0,.08)">
+      <% if (selectedCat) { %>
+      <%/* kategori başlığı üstteki banner'da gösteriliyor */%>
+      <% } %>
+      <div class="shop-header">
+        <div class="shop-info">
+          <h1><%= title %></h1>
+          <span class="result-count"><%= total %> ürün bulundu</span>
+        </div>
+        <div class="shop-controls">
+          <form class="search-form" action="/shop" method="GET">
+            <% if (currentCategory) { %><input type="hidden" name="category" value="<%= currentCategory %>"><% } %>
+            <input type="text" name="search" placeholder="Ürün ara..." value="<%= currentSearch %>" class="search-input">
+            <button type="submit" class="btn btn-sm btn-primary">Ara</button>
+          </form>
+          <select onchange="location.href=this.value" class="sort-select">
+            <option value="/shop?category=<%= currentCategory %>&search=<%= currentSearch %>&sort=newest" <%= currentSort === '' || currentSort === 'newest' ? 'selected' : '' %>>En Yeni</option>
+            <option value="/shop?category=<%= currentCategory %>&search=<%= currentSearch %>&sort=price_asc" <%= currentSort === 'price_asc' ? 'selected' : '' %>>Fiyat: Düşükten Yükseğe</option>
+            <option value="/shop?category=<%= currentCategory %>&search=<%= currentSearch %>&sort=price_desc" <%= currentSort === 'price_desc' ? 'selected' : '' %>>Fiyat: Yüksekten Düşüğe</option>
+            <option value="/shop?category=<%= currentCategory %>&search=<%= currentSearch %>&sort=popular" <%= currentSort === 'popular' ? 'selected' : '' %>>Popüler</option>
+            <option value="/shop?category=<%= currentCategory %>&search=<%= currentSearch %>&sort=name_asc" <%= currentSort === 'name_asc' ? 'selected' : '' %>>A-Z</option>
+          </select>
+        </div>
+      </div>
+
+      <% if (!currentCategory && !currentSearch && categories.length > 0) { %>
+      <div class="shop-category-cards">
+        <% categories.forEach(c => { %>
+        <a href="/shop?category=<%= c.slug %>" class="shop-cat-card" style="<%= c.color ? 'border-color:' + c.color : '' %>">
+          <% if (c.image) { %>
+          <div class="shop-cat-card-img"><img src="<%= c.image %>" alt="<%= c.name %>" loading="lazy"></div>
+          <% } else { %>
+          <div class="shop-cat-card-icon" style="<%= c.color ? 'background:' + c.color + '15;color:' + c.color : '' %>">
+            <% if (c.icon) { %><span style="font-size:1.5rem"><%= c.icon %></span><% } else { %>
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            <% } %>
+          </div>
+          <% } %>
+          <span class="shop-cat-card-name"><%= c.name %></span>
+        </a>
+        <% }) %>
+      </div>
+      <% } %>
+
+      <% if (products.length > 0) { %>
+      <div class="product-grid">
+        <% products.forEach(product => { %>
+        <a href="/shop/<%= product.slug %>" class="product-card">
+          <div class="product-image-wrap">
+            <% if (product.cover_image) { %>
+            <img src="<%= product.cover_image %>" alt="<%= product.title %>" loading="lazy">
+            <% } else { %>
+            <div class="product-no-image"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+            <% } %>
+            <% if (product.sale_price) { %><span class="product-badge badge-sale">İndirim</span><% } %>
+            <% if (product.stock === 0) { %><span class="product-badge badge-out">Tükendi</span><% } %>
+          </div>
+          <div class="product-info">
+            <% if (product.category_name) { %><span class="product-category"><%= product.category_name %></span><% } %>
+            <h3 class="product-title"><%= product.title %></h3>
+            <% if (product.description) { %><p class="product-desc"><%= product.description.substring(0, 80) %></p><% } %>
+            <div class="product-price">
+              <% if (product.sale_price) { %>
+              <span class="price-old"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.price * (1 + site.kdv_rate / 100)).toFixed(2) : product.price.toFixed(2) %></span>
+              <span class="price-current"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.sale_price * (1 + site.kdv_rate / 100)).toFixed(2) : product.sale_price.toFixed(2) %></span>
+              <% if (site.kdv_enabled) { %><span style="display:block;font-size:.68rem;color:#9ca3af;margin-top:2px">KDV Dahil · KDV Hariç: <%= site.currency_symbol %><%= product.sale_price.toFixed(2) %></span><% } %>
+              <% } else { %>
+              <span class="price-current"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.price * (1 + site.kdv_rate / 100)).toFixed(2) : product.price.toFixed(2) %></span>
+              <% if (site.kdv_enabled) { %><span style="display:block;font-size:.68rem;color:#9ca3af;margin-top:2px">KDV Dahil · KDV Hariç: <%= site.currency_symbol %><%= product.price.toFixed(2) %></span><% } %>
+              <% } %>
+            </div>
+            <% if (product.stock_visible && product.stock !== -1) { %>
+            <span class="stock-info <%= product.stock > 0 ? 'in-stock' : 'out-of-stock' %>">
+              <%= product.stock > 0 ? 'Stokta: ' + product.stock : 'Tükendi' %>
+            </span>
+            <% } %>
+          </div>
+        </a>
+        <% }) %>
+      </div>
+
+      <!-- Sayfalama -->
+      <% if (totalPages > 1) { %>
+      <div class="pagination">
+        <% if (currentPage > 1) { %>
+        <a href="/shop?page=<%= currentPage - 1 %>&category=<%= currentCategory %>&search=<%= currentSearch %>&sort=<%= currentSort %>" class="page-btn">&laquo; Önceki</a>
+        <% } %>
+        <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+        <a href="/shop?page=<%= i %>&category=<%= currentCategory %>&search=<%= currentSearch %>&sort=<%= currentSort %>" class="page-btn <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+        <% } %>
+        <% if (currentPage < totalPages) { %>
+        <a href="/shop?page=<%= currentPage + 1 %>&category=<%= currentCategory %>&search=<%= currentSearch %>&sort=<%= currentSort %>" class="page-btn">Sonraki &raquo;</a>
+        <% } %>
+      </div>
+      <% } %>
+
+      <% } else { %>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <h3>Ürün bulunamadı</h3>
+        <p>Arama kriterlerinize uygun ürün bulunamadı.</p>
+        <a href="/shop" class="btn btn-primary">Tüm Ürünleri Gör</a>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+function applyFilters() {
+  const params = new URLSearchParams(window.location.search);
+  const min = document.getElementById('minPrice')?.value;
+  const max = document.getElementById('maxPrice')?.value;
+  if (min) params.set('min_price', min); else params.delete('min_price');
+  if (max) params.set('max_price', max); else params.delete('max_price');
+  
+  const filters = {};
+  document.querySelectorAll('.filter-select').forEach(sel => {
+    if (sel.value) filters[sel.dataset.filterId] = sel.value;
+  });
+  if (Object.keys(filters).length > 0) params.set('filters', JSON.stringify(filters));
+  else params.delete('filters');
+  
+  window.location.href = '/shop?' + params.toString();
+}
+</script>

@@ -1,0 +1,292 @@
+<% layout('layouts/admin') %>
+
+<div class="admin-header-row">
+  <h1>Sipariş #<%= order.order_number %></h1>
+  <a href="/admin/orders" class="btn btn-outline">&larr; Siparişlere Dön</a>
+</div>
+
+<div class="form-layout-2col">
+  <div class="form-main">
+    <!-- Sipariş Kalemleri -->
+    <div class="admin-card">
+      <h2>Sipariş Ürünleri</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Ürün</th>
+            <th>Adet</th>
+            <th>Birim Fiyat</th>
+            <th>Toplam</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% items.forEach(item => { %>
+          <tr>
+            <td><%= item.title %></td>
+            <td><%= item.quantity %></td>
+            <td><%= site.currency_symbol %><%= item.price.toFixed(2) %></td>
+            <td><%= site.currency_symbol %><%= (item.price * item.quantity).toFixed(2) %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3"><strong>Genel Toplam</strong><% if (site.kdv_enabled) { %> <small style="color:#6b7280;font-weight:normal">(KDV Dahil %<%= site.kdv_rate %>)</small><% } %></td>
+            <td><strong><%= site.currency_symbol %><%= order.total.toFixed(2) %></strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Müşteri Bilgileri -->
+    <div class="admin-card">
+      <h2>Müşteri Bilgileri</h2>
+      <div class="info-grid">
+        <div><strong>Ad:</strong> <%= order.user_name || '-' %></div>
+        <div><strong>E-posta:</strong> <a href="mailto:<%= order.user_email %>"><%= order.user_email || '-' %></a></div>
+        <div><strong>Telefon:</strong> <%= order.phone || order.user_phone || '-' %></div>
+        <div><strong>Kullanıcı ID:</strong> #<%= order.user_id %></div>
+      </div>
+    </div>
+
+    <% if (shipping) { %>
+    <div class="admin-card">
+      <h2>Teslimat Adresi</h2>
+      <div class="info-list">
+        <div><strong>Başlık:</strong> <%= shipping.title || '-' %></div>
+        <div><strong>Alıcı:</strong> <%= shipping.first_name %> <%= shipping.last_name %></div>
+        <div><strong>Adres:</strong> <%= shipping.address %></div>
+        <div><strong>İl / İlçe:</strong> <%= shipping.city %><%= shipping.district ? ' / ' + shipping.district : '' %></div>
+        <% if (shipping.zip_code) { %><div><strong>Posta Kodu:</strong> <%= shipping.zip_code %></div><% } %>
+        <div><strong>Ülke:</strong> <%= shipping.country || 'Türkiye' %></div>
+        <% if (shipping.phone) { %><div><strong>Telefon:</strong> <%= shipping.phone %></div><% } %>
+      </div>
+    </div>
+    <% } else { %>
+    <div class="admin-card">
+      <h2>Teslimat Adresi</h2>
+      <p style="color:#9ca3af">Teslimat adresi belirtilmemiş.</p>
+    </div>
+    <% } %>
+
+    <% if (billing) { %>
+    <div class="admin-card">
+      <h2>Fatura Bilgileri</h2>
+      <div class="info-list">
+        <div><strong>Tür:</strong> <%= billing.type === 'corporate' ? 'Kurumsal' : 'Bireysel' %></div>
+        <% if (billing.type === 'corporate') { %>
+        <div><strong>Firma:</strong> <%= billing.company_name %></div>
+        <div><strong>Vergi Dairesi:</strong> <%= billing.tax_office %></div>
+        <div><strong>Vergi No:</strong> <%= billing.tax_no %></div>
+        <% } else { %>
+        <div><strong>Ad Soyad:</strong> <%= billing.first_name %> <%= billing.last_name %></div>
+        <% if (billing.tc_no) { %><div><strong>TC Kimlik:</strong> <%= billing.tc_no %></div><% } %>
+        <% } %>
+        <div><strong>Adres:</strong> <%= billing.address %></div>
+        <div><strong>İl / İlçe:</strong> <%= billing.city %><%= billing.district ? ' / ' + billing.district : '' %></div>
+      </div>
+    </div>
+    <% } else { %>
+    <div class="admin-card">
+      <h2>Fatura Bilgileri</h2>
+      <p style="color:#9ca3af">Fatura bilgisi belirtilmemiş.</p>
+    </div>
+    <% } %>
+
+    <% if (order.notes) { %>
+    <div class="admin-card">
+      <h2>Müşteri Notu</h2>
+      <p><%= order.notes %></p>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="form-sidebar">
+    <!-- Durum Yönetimi -->
+    <div class="admin-card">
+      <h2>Durum Yönetimi</h2>
+      <form action="/admin/orders/<%= order.id %>/status" method="POST" id="statusForm">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="status" id="hiddenStatus" value="<%= order.status %>">
+        <input type="hidden" name="payment_status" id="hiddenPayStatus" value="<%= order.payment_status %>">
+
+        <%
+          const orderFlow = [
+            { v: 'pending',    label: 'Beklemede',    icon: '⏳' },
+            { v: 'paid',       label: 'Ödendi',       icon: '💳' },
+            { v: 'processing', label: 'Hazırlanıyor', icon: '📦' },
+            { v: 'shipped',    label: 'Kargoda',      icon: '🚚' },
+            { v: 'delivered',  label: 'Teslim',       icon: '✅' }
+          ];
+          const flowIdx = orderFlow.findIndex(function(s) { return s.v === order.status; });
+        %>
+
+        <p style="font-size:.68rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin:0 0 .5rem">Sipariş Akışı</p>
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.2rem;margin-bottom:.5rem">
+          <% orderFlow.forEach(function(step, i) {
+            const isCur  = order.status === step.v;
+            const isPast = flowIdx > i && order.status !== 'cancelled';
+          %>
+          <button type="button" class="odst-btn"
+            data-val="<%= step.v %>"
+            data-active-border="#3b82f6" data-active-bg="#eff6ff" data-active-color="#1d4ed8"
+            style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:.45rem .5rem;min-width:60px;border-radius:8px;cursor:pointer;outline:none;font-size:.68rem;line-height:1.2;transition:all .15s;border:2px solid <%= isCur ? '#3b82f6' : isPast ? '#bbf7d0' : '#e5e7eb' %>;background:<%= isCur ? '#eff6ff' : isPast ? '#f0fdf4' : '#f9fafb' %>;color:<%= isCur ? '#1d4ed8' : isPast ? '#059669' : '#9ca3af' %>;font-weight:<%= isCur ? '700' : '400' %>">
+            <span style="font-size:1rem"><%= step.icon %></span>
+            <span><%= step.label %></span>
+          </button>
+          <% if (i < orderFlow.length - 1) { %>
+          <span style="color:#d1d5db;font-size:.9rem">›</span>
+          <% } %>
+          <% }) %>
+        </div>
+
+        <button type="button" class="odst-btn"
+          data-val="cancelled"
+          data-active-border="#ef4444" data-active-bg="#fef2f2" data-active-color="#b91c1c"
+          style="display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .7rem;border-radius:6px;cursor:pointer;outline:none;font-size:.72rem;transition:all .15s;border:2px solid <%= order.status === 'cancelled' ? '#ef4444' : '#fecaca' %>;background:<%= order.status === 'cancelled' ? '#fef2f2' : '#fff' %>;color:<%= order.status === 'cancelled' ? '#b91c1c' : '#d1d5db' %>;font-weight:<%= order.status === 'cancelled' ? '700' : '400' %>">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          İptal Edildi
+        </button>
+
+        <p style="font-size:.68rem;font-weight:700;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin:1rem 0 .5rem">Ödeme Durumu</p>
+        <%
+          const payOpts = [
+            { v: 'pending',               label: 'Bekliyor',      ab: '#f59e0b', abg: '#fef3c7', ac: '#92400e' },
+            { v: 'awaiting_confirmation', label: 'Onay Bekliyor', ab: '#3b82f6', abg: '#eff6ff', ac: '#1e40af' },
+            { v: 'confirmed',             label: 'Onaylandı',     ab: '#22c55e', abg: '#f0fdf4', ac: '#166534' },
+            { v: 'failed',                label: 'Başarısız',     ab: '#ef4444', abg: '#fef2f2', ac: '#991b1b' }
+          ];
+        %>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem">
+          <% payOpts.forEach(function(opt) {
+            const isSel = order.payment_status === opt.v;
+          %>
+          <button type="button" class="opay-btn"
+            data-val="<%= opt.v %>"
+            data-active-border="<%= opt.ab %>" data-active-bg="<%= opt.abg %>" data-active-color="<%= opt.ac %>"
+            style="padding:.35rem .85rem;border-radius:999px;cursor:pointer;outline:none;font-size:.75rem;transition:all .15s;border:2px solid <%= isSel ? opt.ab : '#e5e7eb' %>;background:<%= isSel ? opt.abg : '#f9fafb' %>;color:<%= isSel ? opt.ac : '#9ca3af' %>;font-weight:<%= isSel ? '600' : '400' %>">
+            <%= opt.label %>
+          </button>
+          <% }) %>
+        </div>
+
+        <div style="padding:.55rem .7rem;background:#f3f4f6;border-radius:6px;font-size:.78rem;color:#6b7280;margin-bottom:.75rem;line-height:1.8">
+          <strong style="color:#374151">Yöntem:</strong> <%= order.payment_method === 'iban' ? 'IBAN / Havale' : 'Kredi Kartı' %>
+          <% if (order.payment_code) { %> &nbsp;·&nbsp; <strong style="color:#374151">Kod:</strong> <code style="background:#e5e7eb;padding:1px 5px;border-radius:3px"><%= order.payment_code %></code><% } %>
+          <% if (order.payment_ref) { %> &nbsp;·&nbsp; <strong style="color:#374151">Ref:</strong> <%= order.payment_ref %><% } %>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Güncelle</button>
+      </form>
+
+      <% if (order.payment_method === 'iban' && order.payment_status === 'awaiting_confirmation') { %>
+      <div style="margin-top:.6rem;display:flex;gap:.4rem">
+        <form action="/admin/orders/<%= order.id %>/status" method="POST" style="flex:1">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="payment_status" value="confirmed">
+          <input type="hidden" name="status" value="paid">
+          <button type="submit" class="btn btn-success btn-block btn-sm" onclick="return confirm('Ödemeyi onaylamak istediğinize emin misiniz?')">✓ Onayla</button>
+        </form>
+        <form action="/admin/orders/<%= order.id %>/status" method="POST" style="flex:1">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="payment_status" value="failed">
+          <button type="submit" class="btn btn-danger btn-block btn-sm" onclick="return confirm('Ödemeyi reddetmek istediğinize emin misiniz?')">✕ Reddet</button>
+        </form>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Kargo Takip -->
+    <div class="admin-card">
+      <h2>Kargo Takip</h2>
+      <form action="/admin/orders/<%= order.id %>/status" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label class="form-label">Kargo Firması</label>
+          <input type="text" name="cargo_provider" class="form-input" value="<%= order.cargo_provider || '' %>" placeholder="Yurtiçi, MNG, Aras...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Takip Kodu</label>
+          <input type="text" name="tracking_code" class="form-input" value="<%= order.tracking_code || '' %>" placeholder="Kargo takip numarası">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Takip Linki</label>
+          <input type="url" name="tracking_url" class="form-input" value="<%= order.tracking_url || '' %>" placeholder="https://...">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Kargo Bilgisini Güncelle</button>
+        <p style="font-size:.75rem;color:#6b7280;margin-top:.5rem">Takip bilgisi güncellendiğinde müşteriye otomatik e-posta gönderilir.</p>
+      </form>
+    </div>
+
+
+
+    <!-- Fatura -->
+    <div class="admin-card">
+      <h2>Fatura</h2>
+      <% if (order.invoice_url) { %>
+      <p style="margin-bottom:.75rem">
+        <a href="<%= order.invoice_url %>" target="_blank" class="btn btn-outline btn-sm btn-block">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Faturayı Görüntüle / İndir
+        </a>
+      </p>
+      <% } %>
+      <form action="/admin/orders/<%= order.id %>/invoice" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label class="form-label"><%= order.invoice_url ? 'Yeni Fatura Yükle (PDF)' : 'Fatura Yükle (PDF)' %></label>
+          <input type="file" name="invoice" accept=".pdf,application/pdf" class="form-input" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Fatura Yükle & Gönder
+        </button>
+        <p style="font-size:.75rem;color:#6b7280;margin-top:.5rem">PDF yüklendiğinde müşteriye otomatik e-posta ile gönderilir.</p>
+      </form>
+    </div>
+
+    <div class="admin-card">
+      <h2>Tarih</h2>
+      <div class="info-list">
+        <div><strong>Oluşturulma:</strong> <%= new Date(order.created_at).toLocaleString('tr-TR') %></div>
+        <div><strong>Güncelleme:</strong> <%= new Date(order.updated_at).toLocaleString('tr-TR') %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  function activateBtns(clicked, allBtns) {
+    allBtns.forEach(function (b) {
+      if (b === clicked) {
+        b.style.borderColor = b.dataset.activeBorder;
+        b.style.background  = b.dataset.activeBg;
+        b.style.color       = b.dataset.activeColor;
+        b.style.fontWeight  = '700';
+      } else {
+        b.style.borderColor = '#e5e7eb';
+        b.style.background  = b.dataset.val === 'cancelled' ? '#fff' : '#f9fafb';
+        b.style.color       = '#d1d5db';
+        b.style.fontWeight  = '400';
+      }
+    });
+  }
+
+  var orderBtns = Array.from(document.querySelectorAll('.odst-btn'));
+  orderBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      activateBtns(this, orderBtns);
+      document.getElementById('hiddenStatus').value = this.dataset.val;
+    });
+  });
+
+  var payBtns = Array.from(document.querySelectorAll('.opay-btn'));
+  payBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      activateBtns(this, payBtns);
+      document.getElementById('hiddenPayStatus').value = this.dataset.val;
+    });
+  });
+})();
+</script>

@@ -1,0 +1,81 @@
+<% layout('layouts/admin') %>
+
+<div class="admin-header-row">
+  <h1>Siparişler</h1>
+</div>
+
+<div class="admin-filters">
+  <form action="/admin/orders" method="GET" class="filter-form">
+    <input type="text" name="search" placeholder="Sipariş no veya müşteri..." value="<%= search || '' %>" class="form-input form-input-sm">
+    <select name="status" class="form-select form-select-sm">
+      <option value="">Tüm Durumlar</option>
+      <option value="pending" <%= selectedStatus === 'pending' ? 'selected' : '' %>>Beklemede</option>
+      <option value="paid" <%= selectedStatus === 'paid' ? 'selected' : '' %>>Ödendi</option>
+      <option value="processing" <%= selectedStatus === 'processing' ? 'selected' : '' %>>Hazırlanıyor</option>
+      <option value="shipped" <%= selectedStatus === 'shipped' ? 'selected' : '' %>>Kargoda</option>
+      <option value="delivered" <%= selectedStatus === 'delivered' ? 'selected' : '' %>>Teslim Edildi</option>
+      <option value="cancelled" <%= selectedStatus === 'cancelled' ? 'selected' : '' %>>İptal</option>
+    </select>
+    <select name="payment_status" class="form-select form-select-sm">
+      <option value="">Tüm Ödeme Durumları</option>
+      <option value="pending" <%= selectedPayment === 'pending' ? 'selected' : '' %>>Ödeme Bekliyor</option>
+      <option value="awaiting_confirmation" <%= selectedPayment === 'awaiting_confirmation' ? 'selected' : '' %>>Onay Bekliyor</option>
+      <option value="confirmed" <%= selectedPayment === 'confirmed' ? 'selected' : '' %>>Onaylandı</option>
+      <option value="failed" <%= selectedPayment === 'failed' ? 'selected' : '' %>>Başarısız</option>
+    </select>
+    <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
+  </form>
+</div>
+
+<% if (orders.length === 0) { %>
+<div class="empty-state">
+  <p>Sipariş bulunamadı.</p>
+</div>
+<% } else { %>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Sipariş No</th>
+      <th>Müşteri</th>
+      <th>Toplam</th>
+      <th>Ödeme</th>
+      <th>Ödeme Durumu</th>
+      <th>Sipariş Durumu</th>
+      <th>Tarih</th>
+      <th>İşlemler</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% orders.forEach(order => { %>
+    <tr>
+      <td><a href="/admin/orders/<%= order.id %>"><strong>#<%= order.order_number %></strong></a></td>
+      <td><%= order.user_name || order.user_email %></td>
+      <td><%= site.currency_symbol %><%= order.total.toFixed(2) %></td>
+      <td><%= order.payment_method === 'iban' ? 'IBAN' : 'Kart' %></td>
+      <td>
+        <% const payMap = { pending: { t: 'Bekliyor', c: 'warning' }, awaiting_confirmation: { t: 'Onay Bekliyor', c: 'info' }, confirmed: { t: 'Onaylandı', c: 'success' }, failed: { t: 'Başarısız', c: 'danger' } }; %>
+        <% const ps = payMap[order.payment_status] || { t: order.payment_status, c: 'secondary' }; %>
+        <span class="badge badge-<%= ps.c %>"><%= ps.t %></span>
+      </td>
+      <td>
+        <% const statusMap = { pending: { t: 'Beklemede', c: 'warning' }, paid: { t: 'Ödendi', c: 'info' }, processing: { t: 'Hazırlanıyor', c: 'info' }, shipped: { t: 'Kargoda', c: 'primary' }, delivered: { t: 'Teslim', c: 'success' }, cancelled: { t: 'İptal', c: 'danger' } }; %>
+        <% const ss = statusMap[order.status] || { t: order.status, c: 'secondary' }; %>
+        <span class="badge badge-<%= ss.c %>"><%= ss.t %></span>
+      </td>
+      <td><%= new Date(order.created_at).toLocaleDateString('tr-TR') %></td>
+      <td>
+        <a href="/admin/orders/<%= order.id %>" class="btn btn-xs btn-outline">Detay</a>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<% if (totalPages > 1) { %>
+<div class="pagination">
+  <% for (let i = 1; i <= totalPages; i++) { %>
+  <a href="?page=<%= i %><%= search ? '&search=' + search : '' %><%= selectedStatus ? '&status=' + selectedStatus : '' %>" class="page-link <%= currentPage === i ? 'active' : '' %>"><%= i %></a>
+  <% } %>
+</div>
+<% } %>
+<% } %>

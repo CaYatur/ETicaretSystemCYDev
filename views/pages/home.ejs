@@ -1,0 +1,248 @@
+<% layout('layouts/main') %>
+
+<% if (typeof slides !== 'undefined' && slides && slides.length > 0) { %>
+<section class="homepage-slider">
+  <div class="slider-track" id="sliderTrack">
+    <% slides.forEach(function(slide, i) { %>
+    <div class="slider-slide <%= i === 0 ? 'active' : '' %>">
+      <% if (slide.image) { %><div class="slider-bg" style="background-image:url('<%= slide.image %>')"></div><% } %>
+      <div class="slider-overlay"></div>
+      <div class="slider-content container">
+        <% if (slide.title) { %><h2 class="slider-title"><%= slide.title %></h2><% } %>
+        <% if (slide.subtitle) { %><p class="slider-subtitle"><%= slide.subtitle %></p><% } %>
+        <% if (slide.button_text && slide.button_url) { %>
+        <a href="<%= slide.button_url %>" class="btn btn-lg btn-accent"><%= slide.button_text %></a>
+        <% } %>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+  <% if (slides.length > 1) { %>
+  <button class="slider-arrow slider-prev" onclick="slideMove(-1)" aria-label="Önceki">&#10094;</button>
+  <button class="slider-arrow slider-next" onclick="slideMove(1)" aria-label="Sonraki">&#10095;</button>
+  <div class="slider-dots">
+    <% slides.forEach(function(s, i) { %>
+    <button class="slider-dot <%= i === 0 ? 'active' : '' %>" data-slide="<%= i %>" aria-label="Slayt <%= i + 1 %>"></button>
+    <% }) %>
+  </div>
+  <% } %>
+</section>
+<style>
+.homepage-slider { position: relative; overflow: hidden; background: #0f172a; }
+.slider-track { position: relative; width: 100%; min-height: 480px; }
+.slider-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; display: flex; align-items: center; justify-content: center; text-align: center; min-height: 480px; }
+.slider-slide.active { opacity: 1; position: relative; }
+.slider-bg { position: absolute; inset: 0; background-size: cover; background-position: center center; background-repeat: no-repeat; }
+.slider-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.35) 0%, rgba(15,23,42,.55) 100%); }
+.slider-content { position: relative; z-index: 2; padding: 4rem 1.5rem; color: #fff; max-width: 720px; margin: 0 auto; }
+.slider-title { font-size: clamp(1.75rem, 4vw, 3rem); font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -.03em; }
+.slider-subtitle { font-size: clamp(0.9375rem, 2vw, 1.125rem); opacity: .85; margin-bottom: 2rem; max-width: 540px; margin-inline: auto; }
+.slider-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 5; background: rgba(255,255,255,.15); backdrop-filter: blur(4px); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; font-size: 1.25rem; cursor: pointer; transition: background 0.2s; }
+.slider-arrow:hover { background: rgba(255,255,255,.3); }
+.slider-prev { left: 1rem; }
+.slider-next { right: 1rem; }
+.slider-dots { position: absolute; bottom: 1.25rem; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; gap: 0.5rem; }
+.slider-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); background: transparent; cursor: pointer; transition: all 0.2s; padding: 0; }
+.slider-dot.active { background: #fff; border-color: #fff; }
+@media (max-width: 768px) { .slider-track { min-height: 340px; } .slider-slide { min-height: 340px; } .slider-arrow { width: 36px; height: 36px; font-size: 1rem; } }
+</style>
+<script>
+(function() {
+  var current = 0;
+  var slides = document.querySelectorAll('.slider-slide');
+  var dots = document.querySelectorAll('.slider-dot');
+  var total = slides.length;
+  if (total <= 1) return;
+  var timer;
+  function go(idx) {
+    slides[current].classList.remove('active');
+    if (dots[current]) dots[current].classList.remove('active');
+    current = (idx + total) % total;
+    slides[current].classList.add('active');
+    if (dots[current]) dots[current].classList.add('active');
+  }
+  window.slideMove = function(d) { go(current + d); resetTimer(); };
+  window.slideTo = function(i) { go(i); resetTimer(); };
+  document.querySelectorAll('.slider-dot').forEach(function(btn) {
+    btn.addEventListener('click', function() { window.slideTo(parseInt(this.dataset.slide)); });
+  });
+  function resetTimer() { clearInterval(timer); timer = setInterval(function() { go(current + 1); }, 5000); }
+  resetTimer();
+})();
+</script>
+<% } %>
+
+<% sections.forEach(function(section) { %>
+
+  <%/* ── HERO ── */%>
+  <% if (section.type === 'hero' && site.show_hero_section) { %>
+  <section class="hero-section" style="background-color:<%= section.style.bg_color || '#1e293b' %>; color:<%= section.style.text_color || '#fff' %>; min-height:<%= section.style.height || '480px' %>">
+    <% if (section.content.image) { %><div class="hero-bg" style="background-image:url('<%= section.content.image %>')"></div><% } %>
+    <div class="container hero-content animate-<%= section.content.animation || 'fade' %>">
+      <h1 class="hero-title"><%= section.title %></h1>
+      <% if (section.subtitle) { %><p class="hero-subtitle"><%= section.subtitle %></p><% } %>
+      <% if (section.content.button_text) { %>
+      <a href="<%= section.content.button_url || '/shop' %>" class="btn btn-lg btn-accent"><%= section.content.button_text %></a>
+      <% } %>
+    </div>
+  </section>
+
+
+
+  <%/* ── CATEGORIES ── */%>
+  <% } else if (section.type === 'categories' && section.categories && section.categories.length > 0) { %>
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title"><%= section.title %></h2>
+          <% if (section.subtitle) { %><p class="section-subtitle"><%= section.subtitle %></p><% } %>
+        </div>
+        <a href="/shop" class="btn btn-outline btn-sm">Tümünü Gör →</a>
+      </div>
+      <div class="category-circles">
+        <% section.categories.forEach(function(cat) { %>
+        <a href="/shop?category=<%= cat.slug %>" class="cat-circle-item">
+          <div class="cat-circle-img" style="<%= cat.color ? 'border-color:' + cat.color : '' %>">
+            <% if (cat.image) { %>
+            <img src="<%= cat.image %>" alt="<%= cat.name %>" loading="lazy">
+            <% } else { %>
+            <div class="cat-circle-placeholder" style="<%= cat.color ? 'background:' + cat.color + '22' : '' %>">
+              <% if (cat.icon) { %><span class="cat-icon-lg"><%= cat.icon %></span>
+              <% } else { %>
+              <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+              <% } %>
+            </div>
+            <% } %>
+          </div>
+          <span class="cat-circle-name"><%= cat.name %></span>
+        </a>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <%/* ── FEATURED / LATEST PRODUCTS ── */%>
+  <% } else if ((section.type === 'featured' || section.type === 'latest_products') && section.products && section.products.length > 0) { %>
+  <section class="section<%= section.type === 'latest_products' ? ' section-alt' : '' %>">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title"><%= section.title %></h2>
+          <% if (section.subtitle) { %><p class="section-subtitle"><%= section.subtitle %></p><% } %>
+        </div>
+        <a href="/shop" class="btn btn-outline btn-sm">Tümünü Gör →</a>
+      </div>
+      <div class="product-grid">
+        <% section.products.forEach(function(product) { %>
+        <div class="product-card">
+          <a href="/shop/<%= product.slug %>" class="product-card-link">
+            <div class="product-image-wrap">
+              <% if (product.cover_image) { %>
+              <img src="<%= product.cover_image %>" alt="<%= product.title %>" loading="lazy">
+              <% } else { %>
+              <div class="product-no-image">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <% } %>
+              <% if (product.sale_price) { %>
+              <span class="product-badge badge-sale">
+                <%- Math.round((1 - product.sale_price / product.price) * 100) %>%
+              </span>
+              <% } %>
+              <% if (product.stock === 0) { %>
+              <span class="product-badge badge-out" style="left:auto;right:.75rem">Tükendi</span>
+              <% } %>
+            </div>
+            <div class="product-info">
+              <% if (product.category_name) { %><span class="product-category"><%= product.category_name %></span><% } %>
+              <h3 class="product-title"><%= product.title %></h3>
+              <div class="product-price">
+                <% if (product.sale_price) { %>
+                <span class="price-old"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.price * (1 + site.kdv_rate / 100)).toFixed(2) : product.price.toFixed(2) %></span>
+                <span class="price-current"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.sale_price * (1 + site.kdv_rate / 100)).toFixed(2) : product.sale_price.toFixed(2) %></span>
+                <% if (site.kdv_enabled) { %><span style="display:block;font-size:.68rem;color:#9ca3af;margin-top:2px">KDV Dahil · KDV Hariç: <%= site.currency_symbol %><%= product.sale_price.toFixed(2) %></span><% } %>
+                <% } else { %>
+                <span class="price-current"><%= site.currency_symbol %><%= site.kdv_enabled ? (product.price * (1 + site.kdv_rate / 100)).toFixed(2) : product.price.toFixed(2) %></span>
+                <% if (site.kdv_enabled) { %><span style="display:block;font-size:.68rem;color:#9ca3af;margin-top:2px">KDV Dahil · KDV Hariç: <%= site.currency_symbol %><%= product.price.toFixed(2) %></span><% } %>
+                <% } %>
+              </div>
+            </div>
+          </a>
+          <div class="product-card-action">
+            <% if (product.stock === 0) { %>
+            <button disabled class="btn btn-outline btn-sm btn-block"><%= site.label_out_of_stock || 'Stokta Yok' %></button>
+            <% } else { %>
+            <form action="/api/cart/add" method="POST" style="margin:0">
+              <input type="hidden" name="product_id" value="<%= product.id %>">
+              <input type="hidden" name="quantity" value="1">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-primary btn-sm btn-block cart-add-btn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.98-1.71l1.6-9.29H6"/></svg>
+                <%= site.label_add_to_cart || 'Sepete Ekle' %>
+              </button>
+            </form>
+            <% } %>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <%/* ── BANNER ── */%>
+  <% } else if (section.type === 'banner') { %>
+  <section class="banner-section animate-<%= section.content.animation || 'fade' %>" style="background-color:<%= section.style.bg_color || '#2563eb' %>; color:<%= section.style.text_color || '#fff' %>">
+    <% if (section.content.image) { %><div class="banner-bg" style="background-image:url('<%= section.content.image %>')"></div><% } %>
+    <div class="container banner-content">
+      <h2><%= section.title %></h2>
+      <% if (section.subtitle) { %><p><%= section.subtitle %></p><% } %>
+      <% if (section.content.button_text) { %>
+      <a href="<%= section.content.button_url || '/shop' %>" class="btn btn-light btn-lg"><%= section.content.button_text %></a>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ── TEXT ── */%>
+  <% } else if (section.type === 'text' && (section.title || (section.content && section.content.html))) { %>
+  <section class="section">
+    <div class="container text-section">
+      <% if (section.title) { %><h2 class="section-title"><%= section.title %></h2><% } %>
+      <% if (section.content.html) { %><%- section.content.html %><% } %>
+    </div>
+  </section>
+
+  <%/* ── LATEST POSTS ── */%>
+  <% } else if (section.type === 'latest_posts' && section.posts && section.posts.length > 0) { %>
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title"><%= section.title %></h2>
+          <% if (section.subtitle) { %><p class="section-subtitle"><%= section.subtitle %></p><% } %>
+        </div>
+        <a href="/blog" class="btn btn-outline btn-sm">Tüm Yazılar →</a>
+      </div>
+      <div class="post-grid">
+        <% section.posts.forEach(function(post) { %>
+        <a href="/blog/<%= post.slug %>" class="post-card">
+          <% if (post.cover_image) { %>
+          <div class="post-card-image"><img src="<%= post.cover_image %>" alt="<%= post.title %>" loading="lazy"></div>
+          <% } %>
+          <div class="post-card-body">
+            <% if (post.category_name) { %><span class="post-category"><%= post.category_name %></span><% } %>
+            <h3 class="post-card-title"><%= post.title %></h3>
+            <% if (post.excerpt) { %><p class="post-excerpt"><%= post.excerpt.substring(0, 120) %>...</p><% } %>
+            <div class="post-meta">
+              <span class="post-date"><%= new Date(post.created_at).toLocaleDateString('tr-TR') %></span>
+              <% if (post.author_name) { %><span><%= post.author_name %></span><% } %>
+            </div>
+          </div>
+        </a>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+<% }) %>

@@ -1,0 +1,671 @@
+<% layout('layouts/main') %>
+
+<div class="container page-content">
+  <h1>Ödeme</h1>
+
+  <!-- Adım İndikatörü -->
+  <div class="checkout-steps-indicator">
+    <div class="step-dot active" data-step="1"><span class="step-num">1</span><span class="step-label">İletişim</span></div>
+    <div class="step-line"></div>
+    <div class="step-dot" data-step="2"><span class="step-num">2</span><span class="step-label">Adres</span></div>
+    <div class="step-line"></div>
+    <div class="step-dot" data-step="3"><span class="step-num">3</span><span class="step-label">Fatura</span></div>
+    <div class="step-line"></div>
+    <div class="step-dot" data-step="4"><span class="step-num">4</span><span class="step-label">Ödeme</span></div>
+    <div class="step-line"></div>
+    <div class="step-dot" data-step="5"><span class="step-num">5</span><span class="step-label">Not</span></div>
+  </div>
+
+  <div class="checkout-layout">
+    <!-- Checkout Form (SOL - Büyük) -->
+    <form id="checkoutForm" class="checkout-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <!-- Adım 1: Telefon -->
+      <div class="checkout-step active" id="step1">
+        <h3 class="checkout-step-title">1. İletişim Bilgisi</h3>
+        <div class="form-group">
+          <label class="form-label">Telefon Numarası *</label>
+          <input type="tel" name="phone" required class="form-input" placeholder="05XX XXX XX XX" value="<%= user.phone || '' %>">
+        </div>
+        <div class="checkout-step-nav">
+          <span></span>
+          <button type="button" class="btn btn-primary" onclick="goToStep(2)">Sonraki &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Adım 2: Teslimat Adresi -->
+      <div class="checkout-step" id="step2">
+        <h3 class="checkout-step-title">2. Teslimat Adresi</h3>
+        <% if (addresses.length > 0) { %>
+        <select name="shipping_address_id" class="form-select" id="addressSelect" onchange="onAddrSelectChange(this)">
+          <option value="">Adres seçin (opsiyonel)</option>
+          <% addresses.forEach(a => { %>
+          <option value="<%= a.id %>" <%= a.is_default ? 'selected' : '' %>>
+            <%= a.title %> - <%= a.first_name %> <%= a.last_name %>, <%= a.address %>, <%= a.city %>
+          </option>
+          <% }) %>
+        </select>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline btn-sm" onclick="openNewAddrForm()">+ Yeni Adres Ekle</button>
+          <button type="button" class="btn btn-outline btn-sm" id="editAddrBtn" style="display:none" onclick="openEditAddrForm()">&#9998; Düzenle</button>
+        </div>
+        <% } else { %>
+        <p style="margin-bottom:.5rem;color:#6b7280">Kayıtlı adresiniz yok.</p>
+        <% } %>
+        <div id="addressForm" class="inline-form" style="<%= addresses.length > 0 ? 'display:none' : '' %>">
+          <input type="hidden" id="editAddrId" value="">
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label">Adres Başlığı *</label><input type="text" id="addr_title" class="form-input" placeholder="Ev, İş..."></div>
+            <div class="form-group"><label class="form-label">Telefon</label><input type="tel" id="addr_phone" class="form-input" placeholder="05XX XXX XX XX"></div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label">Ad *</label><input type="text" id="addr_first_name" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Soyad *</label><input type="text" id="addr_last_name" class="form-input"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Adres *</label><textarea id="addr_address" class="form-textarea" rows="2"></textarea></div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label">İl *</label><input type="text" id="addr_city" class="form-input"></div>
+            <div class="form-group"><label class="form-label">İlçe</label><input type="text" id="addr_district" class="form-input"></div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label">Posta Kodu *</label><input type="text" id="addr_zip" class="form-input" maxlength="5" placeholder="34000"></div>
+            <div class="form-group"><label class="form-label">Ülke</label><input type="text" id="addr_country" class="form-input" value="Türkiye"></div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm addr-save-btn" onclick="saveAddress()">Adresi Kaydet</button>
+        </div>
+        <div class="checkout-step-nav">
+          <button type="button" class="btn btn-outline" onclick="goToStep(1)">&larr; Geri</button>
+          <button type="button" class="btn btn-primary" onclick="goToStep(3)">Sonraki &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Adım 3: Fatura Profili -->
+      <div class="checkout-step" id="step3">
+        <h3 class="checkout-step-title">3. Fatura Profili *</h3>
+        <% if (billingProfiles.length > 0) { %>
+        <select name="billing_profile_id" required class="form-select" id="billingSelect" onchange="onBillSelectChange(this)">
+          <option value="">Fatura profili seçin</option>
+          <% billingProfiles.forEach(bp => { %>
+          <option value="<%= bp.id %>" <%= bp.is_default ? 'selected' : '' %>>
+            <%= bp.type === 'corporate' ? bp.company_name : bp.first_name + ' ' + bp.last_name %>
+            (<%= bp.type === 'corporate' ? 'Kurumsal' : 'Bireysel' %>) - <%= bp.city %>
+          </option>
+          <% }) %>
+        </select>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline btn-sm" onclick="openNewBillForm()">+ Yeni Fatura Profili</button>
+          <button type="button" class="btn btn-outline btn-sm" id="editBillBtn" style="display:none" onclick="openEditBillForm()">&#9998; Düzenle</button>
+        </div>
+        <% } else { %>
+        <p style="margin-bottom:.5rem;color:#6b7280">Kayıtlı fatura profiliniz yok.</p>
+        <% } %>
+        <div id="billingForm" class="inline-form" style="<%= billingProfiles.length > 0 ? 'display:none' : '' %>">
+          <input type="hidden" id="editBillId" value="">
+          <div class="form-group">
+            <label class="form-label">Fatura Türü *</label>
+            <select id="bill_type" class="form-select" onchange="toggleBillingType()">
+              <option value="individual">Bireysel</option>
+              <option value="corporate">Kurumsal</option>
+            </select>
+          </div>
+          <div id="billIndividual">
+            <div class="form-row-2">
+              <div class="form-group"><label class="form-label">Ad *</label><input type="text" id="bill_first_name" class="form-input"></div>
+              <div class="form-group"><label class="form-label">Soyad *</label><input type="text" id="bill_last_name" class="form-input"></div>
+            </div>
+            <div class="form-group"><label class="form-label">TC Kimlik No</label><input type="text" id="bill_tc" class="form-input" maxlength="11"></div>
+          </div>
+          <div id="billCorporate" style="display:none">
+            <div class="form-group"><label class="form-label">Firma Adı *</label><input type="text" id="bill_company" class="form-input"></div>
+            <div class="form-row-2">
+              <div class="form-group"><label class="form-label">Vergi Dairesi *</label><input type="text" id="bill_tax_office" class="form-input"></div>
+              <div class="form-group"><label class="form-label">Vergi No *</label><input type="text" id="bill_tax_no" class="form-input"></div>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Adres *</label><textarea id="bill_address" class="form-textarea" rows="2"></textarea></div>
+          <div class="form-row-2">
+            <div class="form-group"><label class="form-label">İl *</label><input type="text" id="bill_city" class="form-input"></div>
+            <div class="form-group"><label class="form-label">İlçe</label><input type="text" id="bill_district" class="form-input"></div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm bill-save-btn" onclick="saveBilling()">Fatura Profilini Kaydet</button>
+        </div>
+        <div class="checkout-step-nav">
+          <button type="button" class="btn btn-outline" onclick="goToStep(2)">&larr; Geri</button>
+          <button type="button" class="btn btn-primary" onclick="goToStep(4)">Sonraki &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Adım 4: Ödeme Yöntemi -->
+      <div class="checkout-step" id="step4">
+        <h3 class="checkout-step-title">4. Ödeme Yöntemi *</h3>
+        <div class="payment-methods">
+          <% paymentMethods.forEach(pm => { %>
+          <label class="payment-option">
+            <input type="radio" name="payment_method" value="<%= pm.method %>" required>
+            <div class="payment-option-content">
+              <% if (pm.method === 'iban') { %>
+              <strong><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Havale / EFT (IBAN)</strong>
+              <p>Banka havalesi ile ödeme yapın</p>
+              <% } else if (pm.method === 'card') { %>
+              <strong><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:.3rem"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Kredi / Banka Kartı</strong>
+              <p>Kart ile güvenli ödeme</p>
+              <% } %>
+            </div>
+          </label>
+          <% }) %>
+        </div>
+        <div class="checkout-step-nav">
+          <button type="button" class="btn btn-outline" onclick="goToStep(3)">&larr; Geri</button>
+          <button type="button" class="btn btn-primary" onclick="goToStep(5)">Sonraki &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Adım 5: Notlar + Onayla -->
+      <div class="checkout-step" id="step5">
+        <h3 class="checkout-step-title">5. Sipariş Notu</h3>
+        <label class="form-label">Sipariş Notu (opsiyonel)</label>
+        <textarea name="notes" class="form-textarea" rows="3" placeholder="Siparişiniz hakkında not..."></textarea>
+        <div class="checkout-step-nav">
+          <button type="button" class="btn btn-outline" onclick="goToStep(4)">&larr; Geri</button>
+          <button type="submit" class="btn btn-lg btn-primary" id="checkoutBtn">Siparişi Tamamla</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Sipariş Özeti (SAĞ - Küçük, Sticky) -->
+    <div class="checkout-summary">
+      <h2>Sipariş Özeti</h2>
+      <div class="checkout-items">
+        <% items.forEach(item => { %>
+        <div class="checkout-item">
+          <div class="checkout-item-image">
+            <% if (item.cover_image) { %><img src="<%= item.cover_image %>" alt="<%= item.title %>" loading="lazy"><% } %>
+          </div>
+          <div class="checkout-item-info">
+            <span class="checkout-item-title"><%= item.title %></span>
+            <span class="checkout-item-qty"><%= item.quantity %> adet</span>
+          </div>
+          <span class="checkout-item-price"><%= site.currency_symbol %><%= ((site.kdv_enabled ? (item.sale_price || item.price) * (1 + site.kdv_rate / 100) : (item.sale_price || item.price)) * item.quantity).toFixed(2) %></span>
+        </div>
+        <% }) %>
+      </div>
+      <div class="checkout-total">
+        <% 
+          var kdvTotal = site.kdv_enabled ? total * (1 + site.kdv_rate / 100) : total;
+          var shippingCost = site.shipping_cost || 0;
+          var freeThreshold = site.free_shipping_threshold || 0;
+          if (freeThreshold > 0 && kdvTotal >= freeThreshold) shippingCost = 0;
+          var grandTotal = kdvTotal + shippingCost;
+        %>
+        <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.9375rem">
+          <span>Ara Toplam:<% if (site.kdv_enabled) { %> <small style="color:#9ca3af">(KDV Dahil)</small><% } %></span>
+          <span><%= site.currency_symbol %><%= kdvTotal.toFixed(2) %></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.9375rem">
+          <span>Kargo:<% if (site.shipping_provider) { %> (<%= site.shipping_provider %>)<% } %></span>
+          <span><%= shippingCost > 0 ? site.currency_symbol + shippingCost.toFixed(2) : 'Ücretsiz' %></span>
+        </div>
+        <% if (site.shipping_delivery_time) { %>
+        <div style="font-size:.8125rem;color:#6b7280;margin-bottom:.625rem">Tahmini teslimat: <%= site.shipping_delivery_time %></div>
+        <% } %>
+        <% if (site.shipping_note) { %>
+        <div style="font-size:.8125rem;color:#6b7280;margin-bottom:.625rem"><%= site.shipping_note %></div>
+        <% } %>
+        <div style="display:flex;justify-content:space-between;padding-top:.625rem;border-top:1px solid #e5e7eb">
+          <strong>Toplam:</strong>
+          <strong><%= site.currency_symbol %><%= grandTotal.toFixed(2) %></strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sipariş sonucu modal -->
+  <div id="orderResult" style="display:none" class="order-result">
+    <div class="order-result-content" id="orderResultContent"></div>
+  </div>
+</div>
+
+<script type="application/json" id="addrData"><%- JSON.stringify(addresses) %></script>
+<script type="application/json" id="billData"><%- JSON.stringify(billingProfiles) %></script>
+<script>
+var currentStep = 1;
+var totalSteps = 5;
+var ADDR_DATA = JSON.parse(document.getElementById('addrData').textContent);
+var BILL_DATA = JSON.parse(document.getElementById('billData').textContent);
+
+// Sayfa yenilendikten sonra aynı adımda kal
+(function() {
+  var s = parseInt(sessionStorage.getItem('checkoutReturnStep') || '0');
+  if (s >= 2 && s <= 5) {
+    sessionStorage.removeItem('checkoutReturnStep');
+    setTimeout(function() { goToStep(s, true); }, 10);
+  }
+  // Önceden seçili değerler için düzenle butonunu göster
+  var asel = document.getElementById('addressSelect');
+  if (asel && asel.value) { var eb = document.getElementById('editAddrBtn'); if (eb) eb.style.display = ''; }
+  var bsel = document.getElementById('billingSelect');
+  if (bsel && bsel.value) { var eb2 = document.getElementById('editBillBtn'); if (eb2) eb2.style.display = ''; }
+})();
+
+function goToStep(step, skipValidation) {
+  if (step < 1 || step > totalSteps) return;
+  
+  // Validate current step before moving forward
+  if (step > currentStep && !skipValidation) {
+    // Step 1 → 2: phone is required and must be valid
+    if (currentStep === 1) {
+      var phone = document.querySelector('#step1 input[name="phone"]');
+      if (!phone || !phone.value.trim()) {
+        showToast('Telefon numarası zorunludur', 'error');
+        phone && phone.focus();
+        return;
+      }
+      var phoneClean = phone.value.trim().replace(/[\s\-\(\)]/g, '');
+      if (!/^(05\d{9}|5\d{9}|\+90\d{10})$/.test(phoneClean)) {
+        showToast('Geçerli bir telefon numarası giriniz (05XX XXX XX XX)', 'error');
+        phone.focus();
+        return;
+      }
+    }
+    // Step 2 → 3: must have an address selected or at least one address
+    if (currentStep === 2) {
+      var addrSelect = document.getElementById('addressSelect');
+      var hasAddr = addrSelect && addrSelect.value;
+      if (!hasAddr) {
+        // check if there are any addresses at all
+        var addrOptions = addrSelect ? addrSelect.querySelectorAll('option[value]') : [];
+        var realOptions = 0;
+        addrOptions.forEach(function(o) { if (o.value) realOptions++; });
+        if (realOptions === 0) {
+          showToast('Lütfen önce bir teslimat adresi ekleyiniz', 'error');
+          return;
+        } else {
+          showToast('Lütfen bir teslimat adresi seçiniz', 'error');
+          return;
+        }
+      }
+    }
+    // Step 3 → 4: must have a billing profile selected
+    if (currentStep === 3) {
+      var billSelect = document.getElementById('billingSelect');
+      var hasBill = billSelect && billSelect.value;
+      if (!hasBill) {
+        var billOptions = billSelect ? billSelect.querySelectorAll('option[value]') : [];
+        var realBillOptions = 0;
+        billOptions.forEach(function(o) { if (o.value) realBillOptions++; });
+        if (realBillOptions === 0) {
+          showToast('Lütfen önce bir fatura profili ekleyiniz', 'error');
+          return;
+        } else {
+          showToast('Lütfen bir fatura profili seçiniz', 'error');
+          return;
+        }
+      }
+    }
+    // Step 4 → 5: must have a payment method selected
+    if (currentStep === 4) {
+      var paymentSel = document.querySelector('input[name="payment_method"]:checked');
+      if (!paymentSel) {
+        showToast('Lütfen bir ödeme yöntemi seçiniz', 'error');
+        return;
+      }
+    }
+  }
+  
+  // Hide all steps
+  for (var i = 1; i <= totalSteps; i++) {
+    var el = document.getElementById('step' + i);
+    if (el) el.classList.remove('active');
+  }
+  // Show target step
+  var target = document.getElementById('step' + step);
+  if (target) target.classList.add('active');
+  currentStep = step;
+  // Update step indicator
+  document.querySelectorAll('.step-dot').forEach(function(dot) {
+    var s = parseInt(dot.dataset.step);
+    dot.classList.remove('active', 'done');
+    if (s === currentStep) dot.classList.add('active');
+    else if (s < currentStep) dot.classList.add('done');
+  });
+  // Scroll to top of form
+  document.querySelector('.checkout-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('checkoutBtn');
+  btn.disabled = true;
+  btn.textContent = 'İşleniyor...';
+
+  const formData = new FormData(this);
+  const data = {};
+  formData.forEach((v, k) => data[k] = v);
+
+  fetch('/api/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.SITE.csrf },
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(result => {
+    if (result.success) {
+      let html = '<div class="text-center">';
+      html += '<h2>Siparişiniz Alındı!</h2>';
+      html += '<p>Sipariş No: <strong>' + result.order.order_number + '</strong></p>';
+      html += '<p>Toplam: <strong>' + window.SITE.currency + result.order.total.toFixed(2) + '</strong>' +
+        (window.SITE.kdvEnabled ? ' <small style="color:#6b7280">(KDV Dahil)</small>' : '') + '</p>';
+      
+      if (result.order.payment_method === 'iban' && result.ibanInfo) {
+        html += '<div class="iban-info">';
+        html += '<h3>Havale / EFT Bilgileri</h3>';
+        html += '<p><strong>Banka:</strong> ' + (result.ibanInfo.bank_name || '-') + '</p>';
+        html += '<p><strong>Hesap Sahibi:</strong> ' + (result.ibanInfo.account_holder || '-') + '</p>';
+        html += '<p><strong>IBAN:</strong> ' + (result.ibanInfo.iban || '-') + '</p>';
+        html += '<p class="payment-code"><strong>Açıklama Kodu:</strong> <code>' + result.order.payment_code + '</code></p>';
+        html += '<p class="text-warning">Lütfen havale açıklamasına yukarıdaki kodu yazınız.</p>';
+        html += '<button onclick="confirmPayment(' + result.order.id + ')" class="btn btn-primary" id="confirmPayBtn">Parayı Gönderdim</button>';
+        html += '</div>';
+      }
+      
+      html += '<a href="/account/orders/' + result.order.id + '" class="btn btn-outline">Sipariş Detayı</a>';
+      html += '</div>';
+      
+      document.getElementById('orderResultContent').innerHTML = html;
+      document.getElementById('orderResult').style.display = 'block';
+      document.querySelector('.checkout-form').style.display = 'none';
+      document.querySelector('.checkout-summary').style.display = 'none';
+      document.querySelector('.checkout-steps-indicator').style.display = 'none';
+    } else {
+      showToast(result.error || 'Bir hata oluştu', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Siparişi Tamamla';
+    }
+  })
+  .catch(function() {
+    showToast('Bağlantı hatası', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Siparişi Tamamla';
+  });
+});
+
+function confirmPayment(orderId) {
+  const btn = document.getElementById('confirmPayBtn');
+  btn.disabled = true;
+  btn.textContent = 'Gönderiliyor...';
+  
+  fetch('/api/checkout/confirm-payment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.SITE.csrf },
+    body: JSON.stringify({ order_id: orderId })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      btn.textContent = '✓ Onay Bekleniyor';
+      btn.classList.add('btn-success');
+      showToast(data.message, 'success');
+    } else {
+      showToast(data.error, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Parayı Gönderdim';
+    }
+  });
+}
+
+function onAddrSelectChange(sel) {
+  var btn = document.getElementById('editAddrBtn');
+  if (btn) btn.style.display = sel.value ? '' : 'none';
+  if (sel.value) document.getElementById('addressForm').style.display = 'none';
+}
+function onBillSelectChange(sel) {
+  var btn = document.getElementById('editBillBtn');
+  if (btn) btn.style.display = sel.value ? '' : 'none';
+  if (sel.value) document.getElementById('billingForm').style.display = 'none';
+}
+function openNewAddrForm() {
+  document.getElementById('editAddrId').value = '';
+  ['addr_title','addr_first_name','addr_last_name','addr_address','addr_city','addr_district','addr_zip','addr_phone'].forEach(function(id) { document.getElementById(id).value = ''; });
+  document.getElementById('addr_country').value = 'Türkiye';
+  var b = document.querySelector('.addr-save-btn'); if (b) b.textContent = 'Adresi Kaydet';
+  document.getElementById('addressForm').style.display = '';
+}
+function openEditAddrForm() {
+  var sel = document.getElementById('addressSelect');
+  if (!sel || !sel.value) return;
+  var addr = ADDR_DATA.find(function(a) { return a.id === parseInt(sel.value); });
+  if (!addr) return;
+  document.getElementById('editAddrId').value = addr.id;
+  document.getElementById('addr_title').value = addr.title || '';
+  document.getElementById('addr_first_name').value = addr.first_name || '';
+  document.getElementById('addr_last_name').value = addr.last_name || '';
+  document.getElementById('addr_address').value = addr.address || '';
+  document.getElementById('addr_city').value = addr.city || '';
+  document.getElementById('addr_district').value = addr.district || '';
+  document.getElementById('addr_zip').value = addr.zip_code || '';
+  document.getElementById('addr_country').value = addr.country || 'Türkiye';
+  document.getElementById('addr_phone').value = addr.phone || '';
+  var b = document.querySelector('.addr-save-btn'); if (b) b.textContent = 'Adresi Güncelle';
+  document.getElementById('addressForm').style.display = '';
+}
+function openNewBillForm() {
+  document.getElementById('editBillId').value = '';
+  document.getElementById('bill_type').value = 'individual';
+  toggleBillingType();
+  ['bill_first_name','bill_last_name','bill_tc','bill_company','bill_tax_office','bill_tax_no','bill_address','bill_city','bill_district'].forEach(function(id) { document.getElementById(id).value = ''; });
+  var b = document.querySelector('.bill-save-btn'); if (b) b.textContent = 'Fatura Profilini Kaydet';
+  document.getElementById('billingForm').style.display = '';
+}
+function openEditBillForm() {
+  var sel = document.getElementById('billingSelect');
+  if (!sel || !sel.value) return;
+  var bill = BILL_DATA.find(function(b) { return b.id === parseInt(sel.value); });
+  if (!bill) return;
+  document.getElementById('editBillId').value = bill.id;
+  document.getElementById('bill_type').value = bill.type || 'individual';
+  toggleBillingType();
+  document.getElementById('bill_first_name').value = bill.first_name || '';
+  document.getElementById('bill_last_name').value = bill.last_name || '';
+  document.getElementById('bill_tc').value = bill.tc_no || '';
+  document.getElementById('bill_company').value = bill.company_name || '';
+  document.getElementById('bill_tax_office').value = bill.tax_office || '';
+  document.getElementById('bill_tax_no').value = bill.tax_no || '';
+  document.getElementById('bill_address').value = bill.address || '';
+  document.getElementById('bill_city').value = bill.city || '';
+  document.getElementById('bill_district').value = bill.district || '';
+  var b = document.querySelector('.bill-save-btn'); if (b) b.textContent = 'Fatura Profilini Güncelle';
+  document.getElementById('billingForm').style.display = '';
+}
+function toggleBillingType() {
+  var t = document.getElementById('bill_type').value;
+  document.getElementById('billIndividual').style.display = t === 'individual' ? '' : 'none';
+  document.getElementById('billCorporate').style.display = t === 'corporate' ? '' : 'none';
+}
+function saveAddress() {
+  var title = document.getElementById('addr_title').value.trim();
+  var first_name = document.getElementById('addr_first_name').value.trim();
+  var last_name = document.getElementById('addr_last_name').value.trim();
+  var address = document.getElementById('addr_address').value.trim();
+  var city = document.getElementById('addr_city').value.trim();
+  var zip_code = document.getElementById('addr_zip').value.trim();
+  var phone = document.getElementById('addr_phone').value.trim();
+  if (!title || !first_name || !last_name || !address || !city) {
+    showToast('Zorunlu alanları doldurunuz (Başlık, Ad, Soyad, Adres, İl)', 'error');
+    return;
+  }
+  if (!zip_code) {
+    showToast('Posta kodu zorunludur', 'error');
+    return;
+  }
+  if (title.length < 2 || first_name.length < 2 || last_name.length < 2) {
+    showToast('Ad, Soyad ve Başlık en az 2 karakter olmalıdır', 'error');
+    return;
+  }
+  if (!/^[a-zA-ZçÇğĞıİöÖşŞüÜ\s\-]+$/.test(first_name) || !/^[a-zA-ZçÇğĞıİöÖşŞüÜ\s\-]+$/.test(last_name)) {
+    showToast('Ad ve Soyad sadece harf içermelidir', 'error');
+    return;
+  }
+  if (address.length < 10) {
+    showToast('Adres en az 10 karakter olmalıdır', 'error');
+    return;
+  }
+  if (city.length < 2 || !/^[a-zA-ZçÇğĞıİöÖşŞüÜ\s\-]+$/.test(city)) {
+    showToast('Geçerli bir il adı giriniz', 'error');
+    return;
+  }
+  if (phone && !/^(05\d{9}|5\d{9}|\+90\d{10})$/.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+    showToast('Geçerli bir telefon numarası giriniz (05XX XXX XX XX)', 'error');
+    return;
+  }
+  if (!/^\d{5}$/.test(zip_code)) {
+    showToast('Posta kodu 5 haneli olmalıdır', 'error');
+    return;
+  }
+  var editId = document.getElementById('editAddrId').value;
+  var url = editId ? '/account/addresses/' + editId + '/update' : '/account/addresses';
+  var body = {
+    _csrf: window.SITE.csrf, title: title, first_name: first_name, last_name: last_name,
+    address: address, city: city,
+    district: document.getElementById('addr_district').value.trim(),
+    zip_code: zip_code,
+    country: document.getElementById('addr_country').value.trim() || 'Türkiye',
+    phone: phone,
+    is_default: '1'
+  };
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    credentials: 'same-origin',
+    redirect: 'manual',
+    body: new URLSearchParams(body).toString()
+  }).then(function(resp) {
+    if (resp.ok || resp.status === 302 || resp.status === 0 || resp.type === 'opaqueredirect') {
+      showToast(editId ? 'Adres güncellendi' : 'Adres kaydedildi', 'success');
+      sessionStorage.setItem('checkoutReturnStep', '2');
+      setTimeout(function() { location.reload(); }, 500);
+    } else {
+      showToast('Adres kaydedilemedi', 'error');
+    }
+  }).catch(function() { showToast('Adres kaydedilemedi', 'error'); });
+}
+function saveBilling() {
+  var type = document.getElementById('bill_type').value;
+  var address = document.getElementById('bill_address').value.trim();
+  var city = document.getElementById('bill_city').value.trim();
+  if (!address || !city) {
+    showToast('Adres ve İl zorunludur', 'error');
+    return;
+  }
+  if (address.length < 10) {
+    showToast('Fatura adresi en az 10 karakter olmalıdır', 'error');
+    return;
+  }
+  if (city.length < 2 || !/^[a-zA-ZçÇğĞıİöÖşŞüÜ\s\-]+$/.test(city)) {
+    showToast('Geçerli bir il adı giriniz', 'error');
+    return;
+  }
+  var body = {
+    _csrf: window.SITE.csrf, type: type, address: address, city: city,
+    district: document.getElementById('bill_district').value.trim(),
+    is_default: '1'
+  };
+  if (type === 'individual') {
+    body.first_name = document.getElementById('bill_first_name').value.trim();
+    body.last_name = document.getElementById('bill_last_name').value.trim();
+    body.tc_no = document.getElementById('bill_tc').value.trim();
+    if (!body.first_name || !body.last_name) {
+      showToast('Ad ve Soyad zorunludur', 'error');
+      return;
+    }
+    if (body.first_name.length < 2 || body.last_name.length < 2) {
+      showToast('Ad ve Soyad en az 2 karakter olmalıdır', 'error');
+      return;
+    }
+    if (!/^[a-zA-ZçÇğĞıİöÖşŞüÜ\s\-]+$/.test(body.first_name) || !/^[a-zA-ZçÇğĞıİöÖşŞüÜ\s\-]+$/.test(body.last_name)) {
+      showToast('Ad ve Soyad sadece harf içermelidir', 'error');
+      return;
+    }
+    if (body.tc_no && !/^\d{11}$/.test(body.tc_no)) {
+      showToast('TC Kimlik No 11 haneli rakam olmalıdır', 'error');
+      return;
+    }
+  } else {
+    body.company_name = document.getElementById('bill_company').value.trim();
+    body.tax_office = document.getElementById('bill_tax_office').value.trim();
+    body.tax_no = document.getElementById('bill_tax_no').value.trim();
+    if (!body.company_name || !body.tax_office || !body.tax_no) {
+      showToast('Firma bilgileri zorunludur', 'error');
+      return;
+    }
+    if (body.company_name.length < 2) {
+      showToast('Firma adı en az 2 karakter olmalıdır', 'error');
+      return;
+    }
+    if (!/^\d{10,11}$/.test(body.tax_no)) {
+      showToast('Vergi numarası 10 veya 11 haneli rakam olmalıdır', 'error');
+      return;
+    }
+  }
+  var editId = document.getElementById('editBillId').value;
+  var billUrl = editId ? '/account/billing/' + editId + '/update' : '/account/billing';
+  fetch(billUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    credentials: 'same-origin',
+    redirect: 'manual',
+    body: new URLSearchParams(body).toString()
+  }).then(function(resp) {
+    if (resp.ok || resp.status === 302 || resp.status === 0 || resp.type === 'opaqueredirect') {
+      showToast(editId ? 'Fatura profili güncellendi' : 'Fatura profili kaydedildi', 'success');
+      sessionStorage.setItem('checkoutReturnStep', '3');
+      setTimeout(function() { location.reload(); }, 500);
+    } else {
+      showToast('Fatura profili kaydedilemedi', 'error');
+    }
+  }).catch(function() { showToast('Fatura profili kaydedilemedi', 'error'); });
+}
+</script>
+
+<style>
+/* Step indicator */
+.checkout-steps-indicator {
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  margin-bottom: 2rem; padding: 1rem 0;
+}
+.step-dot {
+  display: flex; flex-direction: column; align-items: center; gap: .25rem; position: relative;
+}
+.step-num {
+  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .875rem; border: 2px solid #d1d5db; color: #9ca3af; background: #fff;
+  transition: all .2s ease;
+}
+.step-label { font-size: .7rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .03em; }
+.step-dot.active .step-num { background: var(--primary, #2563eb); color: #fff; border-color: var(--primary, #2563eb); }
+.step-dot.active .step-label { color: var(--primary, #2563eb); }
+.step-dot.done .step-num { background: #10b981; color: #fff; border-color: #10b981; }
+.step-dot.done .step-label { color: #10b981; }
+.step-line { width: 40px; height: 2px; background: #d1d5db; margin: 0 .25rem; margin-bottom: 1rem; }
+
+/* Step visibility */
+.checkout-step { display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+.checkout-step.active { display: block; }
+.checkout-step-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary, #2563eb); }
+.checkout-step-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
+
+/* Inline forms */
+.inline-form { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-top: .75rem; }
+.inline-form .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.inline-form .form-group { margin-bottom: .75rem; }
+.inline-form .form-label { font-size: .8125rem; font-weight: 500; margin-bottom: .25rem; display: block; }
+.inline-form .form-input, .inline-form .form-select, .inline-form .form-textarea { font-size: .875rem; padding: .5rem .625rem; }
+
+@media (max-width: 640px) {
+  .inline-form .form-row-2 { grid-template-columns: 1fr; }
+  .checkout-steps-indicator { gap: 0; }
+  .step-line { width: 20px; }
+  .step-num { width: 30px; height: 30px; font-size: .75rem; }
+  .step-label { font-size: .6rem; }
+}
+</style>

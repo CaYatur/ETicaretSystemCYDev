@@ -1,0 +1,59 @@
+<% layout('layouts/admin') %>
+
+<h1>Yetki Yönetimi</h1>
+
+<p class="text-muted">Her rol için izinleri ayrı ayrı ayarlayabilirsiniz. Admin rolü her zaman tam yetkiye sahiptir.</p>
+
+<form action="/admin/permissions" method="POST">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <% const roles = ['editor', 'moderator']; %>
+  <% const permissionGroups = {
+    'Ürünler': ['products.view', 'products.create', 'products.edit', 'products.delete'],
+    'Kategoriler': ['categories.view', 'categories.create', 'categories.edit', 'categories.delete'],
+    'Siparişler': ['orders.view', 'orders.edit', 'orders.delete'],
+    'Kullanıcılar': ['users.view', 'users.edit'],
+    'Blog': ['posts.view', 'posts.create', 'posts.edit', 'posts.delete'],
+    'Ayarlar': ['settings.view', 'settings.edit'],
+    'Analitik': ['analytics.view'],
+    'Yasal': ['legal.view', 'legal.edit'],
+    'Backlinkler': ['backlinks.view', 'backlinks.edit', 'backlinks.delete'],
+    'İletişim': ['contact.view', 'contact.edit', 'contact.delete'],
+    'Ana Sayfa': ['homepage.view', 'homepage.edit'],
+    'Filtreler': ['filters.view', 'filters.edit', 'filters.delete'],
+    'Ödeme': ['payment.view', 'payment.edit']
+  }; %>
+
+  <div class="permissions-table-wrapper">
+    <table class="admin-table permissions-table">
+      <thead>
+        <tr>
+          <th>İzin</th>
+          <% roles.forEach(role => { %>
+          <th class="text-center"><%= role.charAt(0).toUpperCase() + role.slice(1) %></th>
+          <% }) %>
+        </tr>
+      </thead>
+      <tbody>
+        <% Object.entries(permissionGroups).forEach(([group, perms]) => { %>
+        <tr class="permission-group-row">
+          <td colspan="<%= roles.length + 1 %>"><strong><%= group %></strong></td>
+        </tr>
+        <% perms.forEach(perm => { %>
+        <tr>
+          <td><code><%= perm %></code></td>
+          <% roles.forEach(role => { %>
+          <td class="text-center">
+            <input type="checkbox" name="perm_<%= role %>_<%= perm %>" value="1" 
+              <%= (currentPermissions[role] && currentPermissions[role].includes(perm)) ? 'checked' : '' %>>
+          </td>
+          <% }) %>
+        </tr>
+        <% }) %>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <button type="submit" class="btn btn-primary btn-lg" style="margin-top:1rem">İzinleri Kaydet</button>
+</form>

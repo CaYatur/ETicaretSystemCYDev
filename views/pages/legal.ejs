@@ -1,0 +1,17 @@
+<% layout('layouts/main') %>
+
+<div class="container page-content">
+  <div class="breadcrumb">
+    <a href="/">Ana Sayfa</a> &rsaquo; <span><%= page.title %></span>
+  </div>
+
+  <article class="legal-page">
+    <h1><%= page.title %></h1>
+    <div class="legal-meta">
+      <span>Son güncelleme: <%= new Date(page.updated_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+    </div>
+    <div class="prose">
+      <%- page.content %>
+    </div>
+  </article>
+</div>

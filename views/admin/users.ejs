@@ -1,0 +1,89 @@
+<% layout('layouts/admin') %>
+
+<div class="admin-header-row">
+  <h1>Kullanıcılar</h1>
+</div>
+
+<div class="admin-filters">
+  <form action="/admin/users" method="GET" class="filter-form">
+    <input type="text" name="search" placeholder="Ad veya e-posta..." value="<%= search || '' %>" class="form-input form-input-sm">
+    <select name="role" class="form-select form-select-sm">
+      <option value="">Tüm Roller</option>
+      <option value="admin" <%= selectedRole === 'admin' ? 'selected' : '' %>>Admin</option>
+      <option value="editor" <%= selectedRole === 'editor' ? 'selected' : '' %>>Editör</option>
+      <option value="moderator" <%= selectedRole === 'moderator' ? 'selected' : '' %>>Moderatör</option>
+      <option value="user" <%= selectedRole === 'user' ? 'selected' : '' %>>Kullanıcı</option>
+    </select>
+    <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
+  </form>
+</div>
+
+<% if (users.length === 0) { %>
+<div class="empty-state">
+  <p>Kullanıcı bulunamadı.</p>
+</div>
+<% } else { %>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Avatar</th>
+      <th>Ad</th>
+      <th>E-posta</th>
+      <th>Telefon</th>
+      <th>Rol</th>
+      <th>Kayıt</th>
+      <th>Durum</th>
+      <th>İşlemler</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% users.forEach(u => { %>
+    <tr>
+      <td>
+        <% if (u.avatar) { %>
+        <img src="<%= u.avatar %>" alt="" class="table-avatar">
+        <% } else { %>
+        <div class="table-avatar-placeholder"><%= u.display_name.charAt(0).toUpperCase() %></div>
+        <% } %>
+      </td>
+      <td><strong><%= u.display_name %></strong></td>
+      <td><%= u.email %></td>
+      <td><%= u.phone || '-' %></td>
+      <td>
+        <% const roleMap = { admin: 'danger', editor: 'info', moderator: 'warning', user: 'secondary' }; %>
+        <span class="badge badge-<%= roleMap[u.role] || 'secondary' %>"><%= u.role %></span>
+      </td>
+      <td><%= new Date(u.created_at).toLocaleDateString('tr-TR') %></td>
+      <td>
+        <span class="badge badge-<%= u.is_active ? 'success' : 'secondary' %>"><%= u.is_active ? 'Aktif' : 'Pasif' %></span>
+        <% if (u.email_verified) { %><span class="badge badge-success" title="Doğrulanmış">&#10003;</span><% } %>
+      </td>
+      <td class="table-actions">
+        <form action="/admin/users/<%= u.id %>?_method=PUT" method="POST" style="display:inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <select name="role" onchange="this.form.submit()" class="form-select form-select-xs">
+            <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>Kullanıcı</option>
+            <option value="moderator" <%= u.role === 'moderator' ? 'selected' : '' %>>Moderatör</option>
+            <option value="editor" <%= u.role === 'editor' ? 'selected' : '' %>>Editör</option>
+            <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
+          </select>
+        </form>
+        <form action="/admin/users/<%= u.id %>?_method=PUT" method="POST" style="display:inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="is_active" value="<%= u.is_active ? 0 : 1 %>">
+          <button type="submit" class="btn btn-xs <%= u.is_active ? 'btn-warning' : 'btn-success' %>"><%= u.is_active ? 'Engelle' : 'Aktifleştir' %></button>
+        </form>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<% if (totalPages > 1) { %>
+<div class="pagination">
+  <% for (let i = 1; i <= totalPages; i++) { %>
+  <a href="?page=<%= i %><%= search ? '&search=' + search : '' %><%= selectedRole ? '&role=' + selectedRole : '' %>" class="page-link <%= currentPage === i ? 'active' : '' %>"><%= i %></a>
+  <% } %>
+</div>
+<% } %>
+<% } %>

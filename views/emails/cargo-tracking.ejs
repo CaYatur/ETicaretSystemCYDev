@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+      <tr><td style="background:<%= primaryColor || '#2563eb' %>;padding:24px;text-align:center">
+        <h1 style="color:#fff;margin:0;font-size:22px"><%= siteName %></h1>
+      </td></tr>
+      <tr><td style="padding:32px 24px">
+        <h2 style="margin:0 0 16px;color:#1f2937">Kargo Bilgisi Güncellendi</h2>
+        <p style="color:#4b5563;line-height:1.6;margin:0 0 16px">
+          Merhaba <%= user.display_name || user.email %>,
+        </p>
+        <p style="color:#4b5563;line-height:1.6;margin:0 0 16px">
+          <strong>#<%= order.order_number %></strong> numaralı siparişiniz kargoya verildi!
+        </p>
+
+        <table width="100%" style="background:#eff6ff;border:1px solid #3b82f6;border-radius:6px;padding:16px;margin:0 0 24px">
+          <tr><td>
+            <% if (order.cargo_provider) { %>
+            <p style="margin:0 0 8px;color:#1e40af"><strong>Kargo Firması:</strong> <%= order.cargo_provider %></p>
+            <% } %>
+            <% if (order.tracking_code) { %>
+            <p style="margin:0 0 8px;color:#1e40af"><strong>Takip Kodu:</strong> <code style="background:#dbeafe;padding:2px 8px;border-radius:4px;font-size:14px"><%= order.tracking_code %></code></p>
+            <% } %>
+            <% if (order.tracking_url) { %>
+            <p style="margin:8px 0 0">
+              <a href="<%= order.tracking_url %>" style="display:inline-block;background:#3b82f6;color:#fff;padding:10px 24px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px">Kargonu Takip Et</a>
+            </p>
+            <% } %>
+          </td></tr>
+        </table>
+
+        <table cellpadding="0" cellspacing="0"><tr><td>
+          <a href="<%= siteUrl %>/account/orders/<%= order.id %>" style="display:inline-block;background:<%= primaryColor || '#2563eb' %>;color:#fff;padding:12px 32px;text-decoration:none;border-radius:6px;font-weight:bold">Sipariş Detayı</a>
+        </td></tr></table>
+      </td></tr>
+      <tr><td style="background:#f9fafb;padding:16px 24px;text-align:center;border-top:1px solid #e5e7eb">
+        <p style="color:#9ca3af;font-size:13px;margin:0">&copy; <%= new Date().getFullYear() %> <%= siteName %></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

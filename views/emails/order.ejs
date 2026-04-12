@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+      <tr><td style="background:<%= primaryColor || '#2563eb' %>;padding:24px;text-align:center">
+        <h1 style="color:#fff;margin:0;font-size:22px"><%= siteName %></h1>
+      </td></tr>
+      <tr><td style="padding:32px 24px">
+        <h2 style="margin:0 0 8px;color:#1f2937">Sipariş Onayı</h2>
+        <p style="color:#4b5563;line-height:1.6;margin:0 0 16px">
+          Merhaba <%= user.display_name || user.email %>, siparişiniz başarıyla alındı.
+        </p>
+        <table width="100%" style="background:#f9fafb;border-radius:6px;padding:16px;margin:0 0 16px">
+          <tr><td>
+            <p style="margin:0 0 4px;font-size:14px;color:#6b7280">Sipariş No</p>
+            <p style="margin:0;font-size:18px;font-weight:bold;color:#1f2937"><%= order.order_number %></p>
+          </td><td style="text-align:right">
+            <p style="margin:0 0 4px;font-size:14px;color:#6b7280">Toplam</p>
+            <p style="margin:0;font-size:18px;font-weight:bold;color:#1f2937"><%= currencySymbol %><%= order.total.toFixed(2) %></p>
+          </td></tr>
+        </table>
+
+        <!-- Ürünler -->
+        <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">
+          <tr style="background:#f3f4f6">
+            <td style="font-weight:bold;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb">Ürün</td>
+            <td style="font-weight:bold;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb;text-align:center">Adet</td>
+            <td style="font-weight:bold;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb;text-align:right">Fiyat</td>
+          </tr>
+          <% items.forEach(item => { %>
+          <tr>
+            <td style="font-size:14px;color:#4b5563;border-bottom:1px solid #f3f4f6;padding:8px"><%= item.title %></td>
+            <td style="font-size:14px;color:#4b5563;border-bottom:1px solid #f3f4f6;text-align:center;padding:8px"><%= item.quantity %></td>
+            <td style="font-size:14px;color:#4b5563;border-bottom:1px solid #f3f4f6;text-align:right;padding:8px"><%= currencySymbol %><%= (item.price * item.quantity).toFixed(2) %></td>
+          </tr>
+          <% }) %>
+        </table>
+
+        <p style="color:#4b5563;line-height:1.6;margin:0 0 8px">
+          <strong>Ödeme Yöntemi:</strong> <%= order.payment_method === 'iban' ? 'Havale / EFT' : 'Kredi Kartı' %>
+        </p>
+
+        <% if (order.payment_method === 'iban' && order.payment_code) { %>
+        <table width="100%" style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:16px;margin:16px 0">
+          <tr><td>
+            <p style="margin:0 0 8px;font-weight:bold;color:#92400e">Havale / EFT Bilgileri:</p>
+            <% if (typeof ibanInfo !== 'undefined' && ibanInfo) { %>
+            <p style="margin:0 0 4px;color:#92400e;font-size:14px">Banka: <%= ibanInfo.bank_name || '-' %></p>
+            <p style="margin:0 0 4px;color:#92400e;font-size:14px">Hesap Sahibi: <%= ibanInfo.account_holder || '-' %></p>
+            <p style="margin:0 0 4px;color:#92400e;font-size:14px">IBAN: <%= ibanInfo.iban || '-' %></p>
+            <% } %>
+            <p style="margin:8px 0 0;color:#92400e;font-size:14px"><strong>Açıklama Kodu: <%= order.payment_code %></strong></p>
+            <p style="margin:4px 0 0;color:#92400e;font-size:12px">Havale açıklamasına bu kodu yazmayı unutmayın.</p>
+          </td></tr>
+        </table>
+        <% } %>
+
+        <table cellpadding="0" cellspacing="0" style="margin-top:16px"><tr><td>
+          <a href="<%= siteUrl %>/account/orders/<%= order.id %>" style="display:inline-block;background:<%= primaryColor || '#2563eb' %>;color:#fff;padding:12px 32px;text-decoration:none;border-radius:6px;font-weight:bold">Siparişi Görüntüle</a>
+        </td></tr></table>
+      </td></tr>
+      <tr><td style="background:#f9fafb;padding:16px 24px;text-align:center;border-top:1px solid #e5e7eb">
+        <p style="color:#9ca3af;font-size:13px;margin:0">&copy; <%= new Date().getFullYear() %> <%= siteName %></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

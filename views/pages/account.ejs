@@ -1,0 +1,109 @@
+<% layout('layouts/main') %>
+
+<div class="container page-content">
+  <h1>Hesabım</h1>
+
+  <div class="account-layout">
+    <!-- Sidebar -->
+    <%- include('../partials/account-sidebar') %>
+
+    <!-- Content -->
+    <div class="account-content">
+      <!-- Profil Güncelle -->
+      <div class="card">
+        <h2>Profil Bilgileri</h2>
+        <form action="/account/profile" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="form-group">
+            <label class="form-label">Avatar</label>
+            <input type="file" name="avatar" accept="image/*" class="form-input">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Ad Soyad</label>
+              <input type="text" name="display_name" value="<%= user.display_name %>" required class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-posta</label>
+              <input type="email" value="<%= user.email %>" disabled class="form-input">
+              <% if (!user.email_verified) { %>
+              <small style="color:#dc2626;display:block;margin-top:4px">⚠ Hesabınız doğrulanmadı</small>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Telefon</label>
+            <input type="tel" name="phone" value="<%= user.phone || '' %>" class="form-input" placeholder="05XX XXX XX XX">
+          </div>
+
+          <button type="submit" class="btn btn-primary">Profili Güncelle</button>
+        </form>
+      </div>
+
+      <!-- Şifre Değiştir -->
+      <div class="card">
+        <% if (user.password_hash) { %>
+        <h2>Şifre Değiştir</h2>
+        <form action="/account/password" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="form-group">
+            <label class="form-label">Mevcut Şifre</label>
+            <input type="password" name="current_password" required class="form-input">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Yeni Şifre</label>
+              <input type="password" name="new_password" required class="form-input" minlength="8">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Yeni Şifre Tekrar</label>
+              <input type="password" name="new_password_confirm" required class="form-input" minlength="8">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Şifreyi Güncelle</button>
+        </form>
+        <% } else { %>
+        <h2>Şifre Oluştur</h2>
+        <p style="color:#6b7280;margin-bottom:1rem">Henüz bir şifre oluşturmadınız. Google ile giriş yaptıysanız, bir şifre belirleyerek e-posta ile de giriş yapabilirsiniz.</p>
+        <form action="/account/password" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">Yeni Şifre</label>
+              <input type="password" name="new_password" required class="form-input" minlength="8">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Yeni Şifre Tekrar</label>
+              <input type="password" name="new_password_confirm" required class="form-input" minlength="8">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Şifre Oluştur</button>
+        </form>
+        <% } %>
+      </div>
+
+      <!-- Bağlı Hesaplar -->
+      <div class="card">
+        <h2>Bağlı Hesaplar</h2>
+        <div class="connected-accounts">
+          <div class="connected-account">
+            <span>Google</span>
+            <% if (user.google_id) { %>
+            <span class="badge badge-success">Bağlı</span>
+            <% } else { %>
+            <a href="/auth/google" class="btn btn-sm btn-outline">Bağla</a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

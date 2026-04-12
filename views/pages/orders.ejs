@@ -1,0 +1,68 @@
+<% layout('layouts/main') %>
+
+<div class="container page-content">
+  <div class="account-layout">
+    <%- include('../partials/account-sidebar') %>
+
+    <div class="account-content">
+      <div class="account-page-header">
+        <h1>Siparişlerim</h1>
+      </div>
+
+  <% if (orders.length === 0) { %>
+  <div class="empty-state">
+    <p>Henüz siparişiniz yok.</p>
+    <a href="/shop" class="btn btn-primary">Alışverişe Başla</a>
+  </div>
+  <% } else { %>
+  <div class="orders-list">
+    <% orders.forEach(order => { %>
+    <div class="order-card">
+      <div class="order-card-header">
+        <div>
+          <strong>#<%= order.order_number %></strong>
+          <span class="text-muted"><%= new Date(order.created_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+        </div>
+        <div>
+          <% 
+          const statusMap = {
+            pending: { text: 'Beklemede', class: 'warning' },
+            paid: { text: 'Ödendi', class: 'info' },
+            processing: { text: 'Hazırlanıyor', class: 'info' },
+            shipped: { text: 'Kargoda', class: 'primary' },
+            delivered: { text: 'Teslim Edildi', class: 'success' },
+            cancelled: { text: 'İptal', class: 'danger' }
+          };
+          const status = statusMap[order.status] || { text: order.status, class: 'secondary' };
+          %>
+          <span class="badge badge-<%= status.class %>"><%= status.text %></span>
+        </div>
+      </div>
+      <div class="order-card-body">
+        <div class="order-info">
+          <span>Ödeme: <%= order.payment_method === 'iban' ? 'Havale/EFT' : 'Kredi Kartı' %></span>
+          <% 
+          const payStatusMap = {
+            pending: { text: 'Ödeme Bekleniyor', class: 'warning' },
+            awaiting_confirmation: { text: 'Onay Bekleniyor', class: 'info' },
+            confirmed: { text: 'Onaylandı', class: 'success' },
+            failed: { text: 'Başarısız', class: 'danger' }
+          };
+          const payStatus = payStatusMap[order.payment_status] || { text: order.payment_status, class: 'secondary' };
+          %>
+          <span class="badge badge-<%= payStatus.class %>"><%= payStatus.text %></span>
+        </div>
+        <div class="order-total">
+          <strong><%= site.currency_symbol %><%= order.total.toFixed(2) %></strong>
+        </div>
+      </div>
+      <div class="order-card-footer">
+        <a href="/account/orders/<%= order.id %>" class="btn btn-sm btn-outline">Detay</a>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+  <% } %>
+    </div><!-- /.account-content -->
+  </div><!-- /.account-layout -->
+</div>

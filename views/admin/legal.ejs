@@ -1,0 +1,59 @@
+<% layout('layouts/admin') %>
+
+<h1>Yasal Sayfalar</h1>
+
+<div class="admin-card">
+  <% if (pages.length === 0) { %>
+  <p class="text-muted">Henüz yasal sayfa yok.</p>
+  <% } else { %>
+  <div class="legal-editor-list">
+    <% pages.forEach(page => { %>
+    <form action="/admin/legal/<%= page.id %>?_method=PUT" method="POST" class="legal-editor-item">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="legal-editor-header">
+        <h3><%= page.title %></h3>
+        <span class="text-muted">/legal/<%= page.slug %></span>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Başlık</label>
+          <input type="text" name="title" value="<%= page.title %>" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Slug</label>
+          <input type="text" name="slug" value="<%= page.slug %>" class="form-input">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">İçerik (Markdown)</label>
+        <textarea name="content" class="form-textarea form-textarea-lg" rows="15"><%= page.content %></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Kaydet</button>
+    </form>
+    <% }) %>
+  </div>
+  <% } %>
+</div>
+
+<!-- Yeni Yasal Sayfa -->
+<div class="admin-card">
+  <h2>Yeni Yasal Sayfa Ekle</h2>
+  <form action="/admin/legal" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Başlık *</label>
+        <input type="text" name="title" required class="form-input" placeholder="Örn: Mesafeli Satış Sözleşmesi">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Slug</label>
+        <input type="text" name="slug" class="form-input" placeholder="Otomatik oluşturulur">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">İçerik (Markdown) *</label>
+      <textarea name="content" required class="form-textarea" rows="10"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Oluştur</button>
+  </form>
+</div>

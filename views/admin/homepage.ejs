@@ -1,0 +1,104 @@
+<% layout('layouts/admin') %>
+
+<h1>Ana Sayfa Düzeni</h1>
+
+<p class="text-muted">Bölümleri sürükleyerek sıralayabilirsiniz. Her bölüm dinamik içerik gösterir.</p>
+
+<!-- Mevcut Bölümler -->
+<div id="homepageSections">
+  <% sections.forEach(section => { %>
+  <div class="admin-card homepage-section-card" data-id="<%= section.id %>">
+    <div class="homepage-section-header">
+      <span class="drag-handle">&#9776;</span>
+      <strong>
+        <% const typeNames = { hero: 'Hero Banner', categories: 'Kategoriler', featured: 'Öne Çıkan Ürünler', latest_products: 'Son Ürünler', banner: 'Banner', text: 'Metin', latest_posts: 'Son Blog Yazıları' }; %>
+        <%= typeNames[section.type] || section.type %>
+      </strong>
+      <span class="badge badge-<%= section.is_active ? 'success' : 'secondary' %>"><%= section.is_active ? 'Aktif' : 'Pasif' %></span>
+    </div>
+    <form action="/admin/homepage/<%= section.id %>?_method=PUT" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">Tür</label>
+          <select name="type" class="form-select">
+            <option value="hero" <%= section.type === 'hero' ? 'selected' : '' %>>Hero Banner</option>
+            <option value="categories" <%= section.type === 'categories' ? 'selected' : '' %>>Kategoriler</option>
+            <option value="featured" <%= section.type === 'featured' ? 'selected' : '' %>>Öne Çıkan Ürünler</option>
+            <option value="latest_products" <%= section.type === 'latest_products' ? 'selected' : '' %>>Son Ürünler</option>
+            <option value="banner" <%= section.type === 'banner' ? 'selected' : '' %>>Banner</option>
+            <option value="text" <%= section.type === 'text' ? 'selected' : '' %>>Metin</option>
+            <option value="latest_posts" <%= section.type === 'latest_posts' ? 'selected' : '' %>>Son Blog Yazıları</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Başlık</label>
+          <input type="text" name="title" class="form-input" value="<%= section.title || '' %>">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sıra</label>
+          <input type="number" name="sort_order" class="form-input" value="<%= section.sort_order %>" min="0">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">İçerik (JSON)</label>
+        <textarea name="content" class="form-textarea" rows="4"><%= typeof section.content === 'object' ? JSON.stringify(section.content, null, 2) : (section.content || '{}') %></textarea>
+        <small class="form-help">
+          hero: {"subtitle":"...", "button_text":"...", "button_url":"...", "bg_color":"..."}<br>
+          banner: {"text":"...", "bg_color":"...", "link":"..."}<br>
+          text: {"html":"..."}<br>
+          featured/latest: {"limit": 8}
+        </small>
+      </div>
+
+      <div class="form-actions">
+        <label class="checkbox-label">
+          <input type="checkbox" name="is_active" value="1" <%= section.is_active ? 'checked' : '' %>> Aktif
+        </label>
+        <button type="submit" class="btn btn-sm btn-primary">Güncelle</button>
+      </div>
+    </form>
+    <form action="/admin/homepage/<%= section.id %>/delete" method="POST" style="display:inline; margin-top: 0.5rem;">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn-sm btn-danger" data-confirm="Silmek istediğinize emin misiniz?">Sil</button>
+    </form>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Yeni Bölüm -->
+<div class="admin-card">
+  <h2>Yeni Bölüm Ekle</h2>
+  <form action="/admin/homepage" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Tür *</label>
+        <select name="type" required class="form-select">
+          <option value="hero">Hero Banner</option>
+          <option value="categories">Kategoriler</option>
+          <option value="featured">Öne Çıkan Ürünler</option>
+          <option value="latest_products">Son Ürünler</option>
+          <option value="banner">Banner</option>
+          <option value="text">Metin</option>
+          <option value="latest_posts">Son Blog Yazıları</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Başlık</label>
+        <input type="text" name="title" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sıra</label>
+        <input type="number" name="sort_order" class="form-input" value="<%= sections.length %>" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">İçerik (JSON)</label>
+      <textarea name="content" class="form-textarea" rows="3">{}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Ekle</button>
+  </form>
+</div>

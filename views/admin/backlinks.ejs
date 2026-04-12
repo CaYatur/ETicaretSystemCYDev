@@ -1,0 +1,107 @@
+<% layout('layouts/admin') %>
+
+<h1>Backlink Yönetimi</h1>
+
+<!-- Yeni Backlink -->
+<div class="admin-card" id="backlinkFormCard">
+  <h2 id="backlinkFormTitle">Yeni Backlink</h2>
+  <form id="backlinkForm" action="/admin/backlinks" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Başlık *</label>
+        <input type="text" name="title" id="bl_title" required class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL *</label>
+        <input type="url" name="url" id="bl_url" required class="form-input" placeholder="https://...">
+      </div>
+    </div>
+
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Açıklama</label>
+        <input type="text" name="description" id="bl_desc" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">İkon (emoji)</label>
+        <input type="text" name="icon" id="bl_icon" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sıra</label>
+        <input type="number" name="sort_order" id="bl_sort" class="form-input" value="0" min="0">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" name="nofollow" id="bl_nofollow" value="1"> Nofollow (rel="nofollow" ekle)
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Kaydet</button>
+      <button type="button" class="btn btn-outline" onclick="resetBlForm()">İptal</button>
+    </div>
+  </form>
+</div>
+
+<!-- Backlink Listesi -->
+<div class="admin-card">
+  <h2>Mevcut Backlinkler</h2>
+  <% if (backlinks.length === 0) { %>
+  <p class="text-muted">Henüz backlink yok.</p>
+  <% } else { %>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Sıra</th>
+        <th>Başlık</th>
+        <th>URL</th>
+        <th>Nofollow</th>
+        <th>Durum</th>
+        <th>İşlemler</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% backlinks.forEach(bl => { %>
+      <tr>
+        <td><%= bl.sort_order %></td>
+        <td><%= bl.icon || '' %> <%= bl.title %></td>
+        <td><a href="<%= bl.url %>" target="_blank" rel="noopener noreferrer"><%= bl.url.substring(0, 40) %><%= bl.url.length > 40 ? '...' : '' %></a></td>
+        <td><%= bl.nofollow ? 'Evet' : 'Hayır' %></td>
+        <td><span class="badge badge-<%= bl.is_active ? 'success' : 'secondary' %>"><%= bl.is_active ? 'Aktif' : 'Pasif' %></span></td>
+        <td class="table-actions">
+          <button class="btn btn-xs btn-outline" data-item="<%= JSON.stringify(bl) %>" onclick="editBacklink(JSON.parse(this.dataset.item))">&#9998;</button>
+          <form action="/admin/backlinks/<%= bl.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Bu backlinki silmek istediğinize emin misiniz?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-xs btn-danger"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<script>
+function editBacklink(bl) {
+  document.getElementById('backlinkFormTitle').textContent = 'Backlink Düzenle';
+  document.getElementById('backlinkForm').action = '/admin/backlinks/' + bl.id + '?_method=PUT';
+  document.getElementById('bl_title').value = bl.title;
+  document.getElementById('bl_url').value = bl.url;
+  document.getElementById('bl_desc').value = bl.description || '';
+  document.getElementById('bl_icon').value = bl.icon || '';
+  document.getElementById('bl_sort').value = bl.sort_order || 0;
+  document.getElementById('bl_nofollow').checked = bl.nofollow;
+  document.getElementById('backlinkFormCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetBlForm() {
+  document.getElementById('backlinkFormTitle').textContent = 'Yeni Backlink';
+  document.getElementById('backlinkForm').action = '/admin/backlinks';
+  document.getElementById('backlinkForm').reset();
+}
+</script>

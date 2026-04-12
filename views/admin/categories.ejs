@@ -1,0 +1,221 @@
+<% layout('layouts/admin') %>
+
+<div class="admin-header-row">
+  <h1>Kategoriler</h1>
+</div>
+
+<!-- Kategori Formu -->
+<div class="admin-card" id="categoryFormCard">
+  <h2 id="categoryFormTitle">Yeni Kategori</h2>
+  <form id="categoryForm" action="/admin/categories" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Kategori Adı *</label>
+        <input type="text" name="name" id="cat_name" required class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tür *</label>
+        <select name="type" id="cat_type" class="form-select">
+          <option value="shop">Mağaza</option>
+          <option value="blog">Blog</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Üst Kategori</label>
+        <select name="parent_id" id="cat_parent" class="form-select">
+          <option value="">Yok (Ana Kategori)</option>
+          <% categories.forEach(c => { %>
+          <option value="<%= c.id %>"><%= c.type === 'shop' ? '[Mağaza]' : '[Blog]' %> <%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Slug</label>
+        <input type="text" name="slug" id="cat_slug" class="form-input" placeholder="Otomatik">
+      </div>
+      <div class="form-group">
+        <label class="form-label">İkon (emoji)</label>
+        <input type="text" name="icon" id="cat_icon" class="form-input" placeholder="Örn: kamera, araba...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Renk</label>
+        <div class="color-picker-group">
+          <input type="color" name="color" id="cat_color" class="color-picker-input" value="#333333">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Açıklama</label>
+        <input type="text" name="description" id="cat_desc" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Görsel</label>
+        <div id="cat_image_preview" style="display:none;margin-bottom:0.5rem">
+          <img id="cat_image_thumb" src="" alt="" style="max-height:48px;border-radius:6px">
+        </div>
+        <input type="file" name="image" accept="image/*" class="form-input">
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label class="form-label">Arkaplan Görseli</label>
+        <div id="cat_bg_preview" style="display:none;margin-bottom:0.5rem">
+          <img id="cat_bg_thumb" src="" alt="" style="max-height:48px;border-radius:6px">
+          <label style="margin-left:0.5rem;font-size:0.8125rem"><input type="checkbox" name="remove_bg_image" value="1" id="cat_remove_bg"> Kaldır</label>
+        </div>
+        <input type="file" name="bg_image" accept="image/*" class="form-input">
+        <span class="form-help">Kategori sayfasında arka plan olarak gösterilir.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sıralama</label>
+        <input type="number" name="sort_order" id="cat_sort" class="form-input form-input-sm" value="0" min="0">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Kaydet</button>
+      <button type="button" class="btn btn-outline" onclick="resetCatForm()">İptal</button>
+    </div>
+  </form>
+</div>
+
+<!-- Mağaza Kategorileri -->
+<div class="admin-card">
+  <h2>Mağaza Kategorileri</h2>
+  <% const shopCats = categories.filter(c => c.type === 'shop'); %>
+  <% if (shopCats.length === 0) { %>
+  <p class="text-muted">Henüz mağaza kategorisi yok.</p>
+  <% } else { %>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Sıra</th>
+        <th>Görsel</th>
+        <th>Ad</th>
+        <th>Slug</th>
+        <th>Üst</th>
+        <th>Durum</th>
+        <th>İşlemler</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% shopCats.forEach(c => { %>
+      <tr>
+        <td><%= c.sort_order %></td>
+        <td>
+          <% if (c.image) { %>
+          <img src="<%= c.image %>" alt="<%= c.name %>" class="thumb">
+          <% } else { %>
+          <div class="table-thumb-placeholder">-</div>
+          <% } %>
+        </td>
+        <td><%= c.icon || '' %> <%= c.name %></td>
+        <td><code><%= c.slug %></code></td>
+        <td><%= c.parent_name || '-' %></td>
+        <td><span class="badge badge-<%= c.is_active ? 'success' : 'secondary' %>"><%= c.is_active ? 'Aktif' : 'Pasif' %></span></td>
+        <td class="table-actions">
+          <button class="btn btn-xs btn-outline" data-item="<%= JSON.stringify(c) %>" onclick="editCategory(JSON.parse(this.dataset.item))">&#9998;</button>
+          <form action="/admin/categories/<%= c.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Bu kategoriyi silmek istediğinize emin misiniz?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-xs btn-danger"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<!-- Blog Kategorileri -->
+<div class="admin-card">
+  <h2>Blog Kategorileri</h2>
+  <% const blogCats = categories.filter(c => c.type === 'blog'); %>
+  <% if (blogCats.length === 0) { %>
+  <p class="text-muted">Henüz blog kategorisi yok.</p>
+  <% } else { %>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Sıra</th>
+        <th>Ad</th>
+        <th>Slug</th>
+        <th>Durum</th>
+        <th>İşlemler</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% blogCats.forEach(c => { %>
+      <tr>
+        <td><%= c.sort_order %></td>
+        <td><%= c.icon || '' %> <%= c.name %></td>
+        <td><code><%= c.slug %></code></td>
+        <td><span class="badge badge-<%= c.is_active ? 'success' : 'secondary' %>"><%= c.is_active ? 'Aktif' : 'Pasif' %></span></td>
+        <td class="table-actions">
+          <button class="btn btn-xs btn-outline" data-item="<%= JSON.stringify(c) %>" onclick="editCategory(JSON.parse(this.dataset.item))">&#9998;</button>
+          <form action="/admin/categories/<%= c.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Bu kategoriyi silmek istediğinize emin misiniz?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-xs btn-danger"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<script>
+function editCategory(c) {
+  document.getElementById('categoryFormTitle').textContent = 'Kategori Düzenle';
+  document.getElementById('categoryForm').action = '/admin/categories/' + c.id + '?_method=PUT';
+  document.getElementById('cat_name').value = c.name;
+  document.getElementById('cat_type').value = c.type;
+  document.getElementById('cat_parent').value = c.parent_id || '';
+  document.getElementById('cat_slug').value = c.slug;
+  document.getElementById('cat_icon').value = c.icon || '';
+  document.getElementById('cat_color').value = c.color || '#333333';
+  document.getElementById('cat_desc').value = c.description || '';
+  document.getElementById('cat_sort').value = c.sort_order || 0;
+
+  // Show current image preview
+  const imgPreview = document.getElementById('cat_image_preview');
+  const imgThumb = document.getElementById('cat_image_thumb');
+  if (c.image) {
+    imgThumb.src = c.image;
+    imgPreview.style.display = 'block';
+  } else {
+    imgPreview.style.display = 'none';
+  }
+
+  // Show bg_image preview
+  const bgPreview = document.getElementById('cat_bg_preview');
+  const bgThumb = document.getElementById('cat_bg_thumb');
+  const removeBg = document.getElementById('cat_remove_bg');
+  if (c.bg_image) {
+    bgThumb.src = c.bg_image;
+    bgPreview.style.display = 'block';
+    removeBg.checked = false;
+  } else {
+    bgPreview.style.display = 'none';
+  }
+
+  document.getElementById('categoryFormCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetCatForm() {
+  document.getElementById('categoryFormTitle').textContent = 'Yeni Kategori';
+  document.getElementById('categoryForm').action = '/admin/categories';
+  document.getElementById('categoryForm').reset();
+  document.getElementById('cat_image_preview').style.display = 'none';
+  document.getElementById('cat_bg_preview').style.display = 'none';
+}
+</script>
